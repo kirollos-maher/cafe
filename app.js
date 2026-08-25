@@ -1,4 +1,24 @@
 // ============================================================
+// app.js - كامل منطق التطبيق
+// ============================================================
+
+// ============================================================
+// استيراد الـ supabaseClient من window
+// ============================================================
+const supabaseClient = window.supabaseClient;
+
+// التحقق من وجود العميل
+if (!supabaseClient) {
+    console.error('❌ supabaseClient is not defined! Check config.js loading order.');
+    document.addEventListener('DOMContentLoaded', function() {
+        const errEl = document.getElementById('setupError');
+        if (errEl) errEl.textContent = '⚠️ خطأ في تحميل الاتصال بقاعدة البيانات. تأكد من اتصال الإنترنت.';
+    });
+} else {
+    console.log('✅ supabaseClient is ready in app.js');
+}
+
+// ============================================================
 // TRANSLATIONS
 // ============================================================
 let currentLang = 'ar';
@@ -197,8 +217,7 @@ const translations = {
         'auto_theme': 'استخدام ألوان الشعار كثيم (اختياري)',
         'shift_open': 'شيفت مفتوح',
         'shift_closed': 'شيفت مقفول',
-        'my_shift': 'شيفتي',
-        'shift_employee': 'شيفت الموظف'
+        'my_shift': 'شيفتي'
     },
     en: {
         'platepro': '✦ PLATE PRO ✦',
@@ -393,20 +412,10 @@ const translations = {
         'auto_theme': 'Use logo colors as theme (optional)',
         'shift_open': 'Shift Open',
         'shift_closed': 'Shift Closed',
-        'my_shift': 'My Shift',
-        'shift_employee': 'Employee Shift'
+        'my_shift': 'My Shift'
     }
 };
 
-// ============================================================
-// SUPABASE CLIENT - FIXED
-// ============================================================
-// استخدام supabaseClient من window (المعرف في config.js)
-const supabaseClient = window.supabaseClient;
-
-// ============================================================
-// TRANSLATION FUNCTIONS
-// ============================================================
 function toggleLanguage() {
     currentLang = currentLang === 'ar' ? 'en' : 'ar';
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -660,9 +669,7 @@ function extractThemeFromLogo(imageData) {
                 let [sr, sg, sb] = sortedColors.length > 1 ? sortedColors[1] : [pr, pg, pb];
 
                 const brightness = (pr * 299 + pg * 587 + pb * 114) / 1000;
-                let primaryR = pr,
-                    primaryG = pg,
-                    primaryB = pb;
+                let primaryR = pr, primaryG = pg, primaryB = pb;
                 if (brightness > 200 && sortedColors.length > 1) {
                     const [r2, g2, b2] = sortedColors[1];
                     primaryR = r2;
@@ -820,8 +827,7 @@ function navigateTo(viewId) {
     if (viewId === 'view-dashboard') renderDashboard();
     if (viewId === 'view-tables') renderTables();
     if (viewId === 'view-kitchen') renderKitchenOrders();
-    if (viewId === 'view-menu') { renderMenuView();
-        renderMenuManagement(); }
+    if (viewId === 'view-menu') { renderMenuView(); renderMenuManagement(); }
     if (viewId === 'view-settings') renderSettings();
     if (viewId === 'view-qr') generateQRCodePage();
 }
@@ -1009,8 +1015,7 @@ function updateShiftIndicator() {
 
     if (currentShift && currentShift.status === 'open') {
         indicator.className = 'shift-indicator';
-        const empName = currentShift.employee_name || currentUser?.name || '';
-        label.textContent = empName ? `${t('shift_open')} - ${empName}` : t('shift_open');
+        label.textContent = t('shift_open');
     } else {
         indicator.className = 'shift-indicator closed';
         label.textContent = t('shift_closed');
@@ -1630,7 +1635,7 @@ async function closeEmployeeShift() {
             .update({
                 status: 'closed',
                 closed_at: new Date().toISOString(),
-                closed_by: currentUser?.id || null,
+                closed_by: currentUser?.name || 'system',
                 total_revenue: revenue,
                 total_expenses: totalExpenses,
                 total_profit: profit
