@@ -197,7 +197,8 @@ const translations = {
         'auto_theme': 'استخدام ألوان الشعار كثيم (اختياري)',
         'shift_open': 'شيفت مفتوح',
         'shift_closed': 'شيفت مقفول',
-        'my_shift': 'شيفتي'
+        'my_shift': 'شيفتي',
+        'shift_employee': 'شيفت الموظف'
     },
     en: {
         'platepro': '✦ PLATE PRO ✦',
@@ -392,10 +393,20 @@ const translations = {
         'auto_theme': 'Use logo colors as theme (optional)',
         'shift_open': 'Shift Open',
         'shift_closed': 'Shift Closed',
-        'my_shift': 'My Shift'
+        'my_shift': 'My Shift',
+        'shift_employee': 'Employee Shift'
     }
 };
 
+// ============================================================
+// SUPABASE CLIENT - FIXED
+// ============================================================
+// استخدام supabaseClient من window (المعرف في config.js)
+const supabaseClient = window.supabaseClient;
+
+// ============================================================
+// TRANSLATION FUNCTIONS
+// ============================================================
 function toggleLanguage() {
     currentLang = currentLang === 'ar' ? 'en' : 'ar';
     document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
@@ -623,7 +634,6 @@ function extractThemeFromLogo(imageData) {
                 const imageData2 = ctx.getImageData(0, 0, img.width, img.height);
                 const data = imageData2.data;
 
-                // جمع الألوان الرئيسية
                 const colorMap = {};
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
@@ -631,7 +641,6 @@ function extractThemeFromLogo(imageData) {
                     const b = data[i + 2];
                     const a = data[i + 3];
                     if (a < 128) continue;
-                    // تقليل الدقة لتجميع الألوان المتشابهة
                     const cr = Math.round(r / 16) * 16;
                     const cg = Math.round(g / 16) * 16;
                     const cb = Math.round(b / 16) * 16;
@@ -640,20 +649,16 @@ function extractThemeFromLogo(imageData) {
                     colorMap[key]++;
                 }
 
-                // ترتيب الألوان حسب التكرار
                 const sortedColors = Object.entries(colorMap)
                     .sort((a, b) => b[1] - a[1])
                     .map(([key]) => key.split(',').map(Number))
-                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200)); // استبعاد الأبيض
+                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200));
 
                 if (sortedColors.length === 0) return;
 
-                // اللون الأساسي = أكثر لون متكرر غير أبيض
                 const [pr, pg, pb] = sortedColors[0];
-                // اللون الثانوي = ثاني لون أو نفس اللون بدرجة أغمق
                 let [sr, sg, sb] = sortedColors.length > 1 ? sortedColors[1] : [pr, pg, pb];
 
-                // إذا كان اللون الأساسي فاتح جداً، نستخدم اللون الثانوي
                 const brightness = (pr * 299 + pg * 587 + pb * 114) / 1000;
                 let primaryR = pr,
                     primaryG = pg,
@@ -665,14 +670,12 @@ function extractThemeFromLogo(imageData) {
                     primaryB = b2;
                 }
 
-                // توليد الألوان المشتقة
                 const primary = `rgb(${primaryR},${primaryG},${primaryB})`;
                 const primaryDark = `rgb(${Math.max(0, primaryR - 40)},${Math.max(0, primaryG - 40)},${Math.max(0, primaryB - 40)})`;
                 const primaryLight = `rgb(${Math.min(255, primaryR + 60)},${Math.min(255, primaryG + 60)},${Math.min(255, primaryB + 60)})`;
                 const primaryGlow = `rgba(${primaryR},${primaryG},${primaryB},0.2)`;
                 const shadowGold = `0 4px 24px rgba(${primaryR},${primaryG},${primaryB},0.35)`;
 
-                // تطبيق الثيم
                 document.documentElement.setAttribute('data-logo-theme', 'true');
                 document.documentElement.style.setProperty('--logo-primary', primary);
                 document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
@@ -682,7 +685,6 @@ function extractThemeFromLogo(imageData) {
 
                 console.log('🎨 Theme extracted from logo:', { primary, primaryDark, primaryLight });
 
-                // تحديث الـ UI
                 renderDashboard();
                 renderTables();
                 renderSettings();
@@ -749,7 +751,7 @@ let menuItems = [];
 let menuCategories = [];
 let employees = [];
 let paymentMethods = [];
-let currentShift = null; // shift الخاص بالموظف الحالي
+let currentShift = null;
 let _orderItems = [];
 let selectedPaymentMethod = null;
 let orderStatus = {};
@@ -803,7 +805,6 @@ function navigateTo(viewId) {
             showToast(t('error_permission'), 'error');
             return;
         }
-        // QR page accessible to all with dashboard perm
         if (viewId === 'view-qr' && !perms.dashboard) {
             showToast(t('error_permission'), 'error');
             return;
@@ -819,7 +820,8 @@ function navigateTo(viewId) {
     if (viewId === 'view-dashboard') renderDashboard();
     if (viewId === 'view-tables') renderTables();
     if (viewId === 'view-kitchen') renderKitchenOrders();
-    if (viewId === 'view-menu') { renderMenuView(); renderMenuManagement(); }
+    if (viewId === 'view-menu') { renderMenuView();
+        renderMenuManagement(); }
     if (viewId === 'view-settings') renderSettings();
     if (viewId === 'view-qr') generateQRCodePage();
 }
@@ -966,7 +968,6 @@ function updateUIByPermissions() {
     if (expenseBtn) expenseBtn.style.display = hasPermission('add_expense') ? 'flex' : 'none';
     if (closeShiftBtn) closeShiftBtn.style.display = hasPermission('close_shift') ? 'flex' : 'none';
 
-    // إخفاء الإيراد عن الوايتر والموظفين العاديين
     if (revenueCard) {
         const canViewRevenue = hasPermission('view_revenue') || currentUser?.type === 'owner';
         revenueCard.style.display = canViewRevenue ? 'block' : 'none';
@@ -992,7 +993,6 @@ function updateUIByPermissions() {
         }
     });
 
-    // إظهار زر QR للجميع (يحتاج dashboard)
     const qrBtn = document.querySelector('[onclick*="view-qr"]');
     if (qrBtn) {
         qrBtn.style.display = hasPermission('dashboard') ? 'flex' : 'none';
@@ -1009,7 +1009,8 @@ function updateShiftIndicator() {
 
     if (currentShift && currentShift.status === 'open') {
         indicator.className = 'shift-indicator';
-        label.textContent = t('shift_open');
+        const empName = currentShift.employee_name || currentUser?.name || '';
+        label.textContent = empName ? `${t('shift_open')} - ${empName}` : t('shift_open');
     } else {
         indicator.className = 'shift-indicator closed';
         label.textContent = t('shift_closed');
@@ -1530,7 +1531,6 @@ async function enterMainApp() {
     loadLogo();
     await loadAllData();
 
-    // إنشاء أو فتح شيفت خاص بالموظف الحالي
     await loadOrOpenEmployeeShift();
 
     document.getElementById('dashBizName').textContent = business.name;
@@ -1566,7 +1566,6 @@ async function loadOrOpenEmployeeShift() {
     const employeeId = currentUser.id;
     const employeeName = currentUser.name || 'موظف';
 
-    // البحث عن شيفت مفتوح لهذا الموظف
     let { data: shift } = await supabaseClient
         .from('shifts')
         .select('*')
@@ -1576,7 +1575,6 @@ async function loadOrOpenEmployeeShift() {
         .maybeSingle();
 
     if (!shift) {
-        // إنشاء شيفت جديد للموظف
         const { data: newShift, error } = await supabaseClient
             .from('shifts')
             .insert({
@@ -1609,7 +1607,6 @@ async function closeEmployeeShift() {
     if (!supabaseClient || !currentShift) return;
 
     try {
-        // حساب الإيرادات والمصروفات لهذا الشيفت
         const { data: completedOrders } = await supabaseClient
             .from('orders')
             .select('total')
@@ -1633,7 +1630,7 @@ async function closeEmployeeShift() {
             .update({
                 status: 'closed',
                 closed_at: new Date().toISOString(),
-                closed_by: currentUser?.name || 'system',
+                closed_by: currentUser?.id || null,
                 total_revenue: revenue,
                 total_expenses: totalExpenses,
                 total_profit: profit
@@ -1786,7 +1783,6 @@ async function renderDashboard() {
         revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
     }
 
-    // التحقق من صلاحية مشاهدة الإيراد
     const canViewRevenue = hasPermission('view_revenue') || currentUser?.type === 'owner';
     const revenueCard = document.querySelector('.stat-card.revenue');
     if (revenueCard) {
@@ -2947,7 +2943,6 @@ function openEmployeeSheet() {
     document.getElementById('deleteEmployeeBtn').style.display = 'none';
     document.getElementById('employeeError').textContent = '';
 
-    // صلاحيات افتراضية حسب الدور
     setDefaultPermissions('waiter');
 
     document.getElementById('saveEmployeeBtn').onclick = saveEmployee;
@@ -2993,7 +2988,6 @@ function setDefaultPermissions(role) {
     document.getElementById('permViewExpenses').checked = perms.view_expenses;
 }
 
-// تحديث الصلاحيات تلقائياً عند تغيير الدور
 document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.getElementById('employeeRole');
     if (roleSelect) {
