@@ -1,6 +1,19 @@
 // ============================================================
 // app.js - كامل منطق التطبيق (من أول سطر لآخر سطر)
 // ============================================================
+// ============================================================
+// CONFIG
+// ============================================================
+const SUPABASE_URL = 'https://bccuzjjnrqnmqwcypucr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_X3pnp718gcVx9-wrisvtHw_44hMVVZ_';
+let supabaseClient = null;
+
+try {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase initialized');
+} catch (e) {
+    console.error('❌ Supabase init failed:', e);
+}
 
 // ============================================================
 // استيراد الـ supabaseClient من window
