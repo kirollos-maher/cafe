@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (النسخة النهائية المعدلة)
+// app.js - كامل منطق التطبيق (نسخة بدون ثيم اللوجو)
 // ============================================================
 
 // ============================================================
@@ -214,7 +214,6 @@ const translations = {
         'no_open_shift': 'لا يوجد شيفت مفتوح',
         'orders': '📋 الطلبات',
         'generate': 'توليد',
-        'auto_theme': 'استخدام ألوان الشعار كثيم (اختياري)',
         'shift_open': 'شيفت مفتوح',
         'shift_closed': 'شيفت مقفول',
         'my_shift': 'شيفتي',
@@ -410,7 +409,6 @@ const translations = {
         'no_open_shift': 'No open shift',
         'orders': '📋 Orders',
         'generate': 'Generate',
-        'auto_theme': 'Use logo colors as theme (optional)',
         'shift_open': 'Shift Open',
         'shift_closed': 'Shift Closed',
         'my_shift': 'My Shift',
@@ -457,15 +455,12 @@ function applyTranslations() {
 let serviceFeePercent = 10;
 let vatPercent = 14;
 let businessLogo = null;
-let useLogoTheme = false;
 
 function loadFeesSettings() {
     const saved = localStorage.getItem('platepro_service_fee');
     if (saved) serviceFeePercent = parseFloat(saved) || 10;
     const savedVat = localStorage.getItem('platepro_vat');
     if (savedVat) vatPercent = parseFloat(savedVat) || 14;
-    const savedTheme = localStorage.getItem('platepro_logo_theme');
-    useLogoTheme = savedTheme === 'true';
 }
 
 function saveFeesSettings() {
@@ -498,18 +493,13 @@ function openFeesSettings() {
 }
 
 // ============================================================
-// LOGO & THEME FROM LOGO
+// LOGO MANAGEMENT (بدون ثيم)
 // ============================================================
 function loadLogo() {
     const saved = localStorage.getItem('platepro_logo');
     if (saved) {
         businessLogo = saved;
         updateLogoUI();
-    }
-    const savedTheme = localStorage.getItem('platepro_logo_theme');
-    useLogoTheme = savedTheme === 'true';
-    if (useLogoTheme && businessLogo) {
-        extractThemeFromLogo(businessLogo);
     }
 }
 
@@ -530,7 +520,6 @@ function openLogoSettings() {
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = businessLogo ? 'inline-flex' : 'none';
     document.getElementById('logoError').textContent = '';
-    document.getElementById('autoThemeFromLogo').checked = useLogoTheme;
     if (businessLogo) {
         document.getElementById('logoPreviewImg').src = businessLogo;
         document.getElementById('logoPreview').style.display = 'block';
@@ -572,57 +561,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// تطبيق ألوان الشعار على كل العناصر
-function applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold) {
-    document.documentElement.setAttribute('data-logo-theme', 'true');
-    document.documentElement.style.setProperty('--logo-primary', primary);
-    document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
-    document.documentElement.style.setProperty('--logo-primary-light', primaryLight);
-    document.documentElement.style.setProperty('--logo-primary-glow', primaryGlow);
-    document.documentElement.style.setProperty('--logo-shadow-gold', shadowGold);
-    
-    document.body.style.background = `linear-gradient(135deg, ${primaryLight}22, var(--bg))`;
-    
-    const header = document.querySelector('.app-header');
-    if (header) header.style.borderBottom = `2px solid ${primary}`;
-    
-    document.querySelectorAll('.stat-card.revenue').forEach(el => {
-        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
-    });
-    
-    document.querySelectorAll('.btn-primary').forEach(el => {
-        el.style.background = primary;
-        el.style.boxShadow = shadowGold;
-    });
-    
-    document.querySelectorAll('.badge-gold').forEach(el => {
-        el.style.background = primary;
-        el.style.borderColor = primaryDark;
-    });
-    
-    document.querySelectorAll('.customer-hero').forEach(el => {
-        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
-    });
-    
-    document.querySelectorAll('.nav-btn.active').forEach(el => {
-        el.style.color = primary;
-    });
-    
-    document.querySelectorAll('.shift-indicator').forEach(el => {
-        el.style.borderColor = primary;
-        el.style.color = primary;
-    });
-    
-    document.querySelectorAll('.table-card.occupied').forEach(el => {
-        el.style.borderColor = primary;
-        el.style.background = `linear-gradient(145deg, ${primaryLight}44, var(--bg-card))`;
-    });
-}
-
 function saveLogo() {
     const fileInput = document.getElementById('logoInput');
     const errEl = document.getElementById('logoError');
-    const useTheme = document.getElementById('autoThemeFromLogo').checked;
 
     if (fileInput.files.length === 0) {
         errEl.textContent = t('error_general');
@@ -634,14 +575,7 @@ function saveLogo() {
     reader.onload = function(event) {
         businessLogo = event.target.result;
         localStorage.setItem('platepro_logo', businessLogo);
-        localStorage.setItem('platepro_logo_theme', useTheme ? 'true' : 'false');
-        useLogoTheme = useTheme;
         updateLogoUI();
-        if (useTheme) {
-            extractThemeFromLogo(businessLogo);
-        } else {
-            removeLogoTheme();
-        }
         closeSheet('settingsLogoOverlay');
         showToast(t('logo_saved'), 'success');
         renderSettings();
@@ -652,140 +586,16 @@ function saveLogo() {
     reader.readAsDataURL(file);
 }
 
-function removeLogoTheme() {
-    document.documentElement.removeAttribute('data-logo-theme');
-    document.documentElement.style.removeProperty('--logo-primary');
-    document.documentElement.style.removeProperty('--logo-primary-dark');
-    document.documentElement.style.removeProperty('--logo-primary-light');
-    document.documentElement.style.removeProperty('--logo-primary-glow');
-    document.documentElement.style.removeProperty('--logo-shadow-gold');
-    
-    document.body.style.background = '';
-    
-    const header = document.querySelector('.app-header');
-    if (header) header.style.borderBottom = '';
-    
-    document.querySelectorAll('.stat-card.revenue').forEach(el => {
-        el.style.background = '';
-    });
-    
-    document.querySelectorAll('.btn-primary').forEach(el => {
-        el.style.background = '';
-        el.style.boxShadow = '';
-    });
-    
-    document.querySelectorAll('.badge-gold').forEach(el => {
-        el.style.background = '';
-        el.style.borderColor = '';
-    });
-    
-    document.querySelectorAll('.customer-hero').forEach(el => {
-        el.style.background = '';
-    });
-    
-    document.querySelectorAll('.nav-btn.active').forEach(el => {
-        el.style.color = '';
-    });
-    
-    document.querySelectorAll('.shift-indicator').forEach(el => {
-        el.style.borderColor = '';
-        el.style.color = '';
-    });
-    
-    document.querySelectorAll('.table-card.occupied').forEach(el => {
-        el.style.borderColor = '';
-        el.style.background = '';
-    });
-}
-
 function removeLogo() {
     if (!confirm(t('remove_logo') + '؟')) return;
     businessLogo = null;
     localStorage.removeItem('platepro_logo');
-    localStorage.removeItem('platepro_logo_theme');
-    useLogoTheme = false;
-    
-    removeLogoTheme();
-    
     updateLogoUI();
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = 'none';
     document.getElementById('logoInput').value = '';
     showToast(t('logo_deleted'), 'success');
     renderSettings();
-}
-
-function extractThemeFromLogo(imageData) {
-    try {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = function() {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, img.width, img.height);
-                const imageData2 = ctx.getImageData(0, 0, img.width, img.height);
-                const data = imageData2.data;
-
-                const colorMap = {};
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    const a = data[i + 3];
-                    if (a < 128) continue;
-                    const cr = Math.round(r / 16) * 16;
-                    const cg = Math.round(g / 16) * 16;
-                    const cb = Math.round(b / 16) * 16;
-                    const key = `${cr},${cg},${cb}`;
-                    if (!colorMap[key]) colorMap[key] = 0;
-                    colorMap[key]++;
-                }
-
-                const sortedColors = Object.entries(colorMap)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([key]) => key.split(',').map(Number))
-                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200));
-
-                if (sortedColors.length === 0) return;
-
-                const [pr, pg, pb] = sortedColors[0];
-                const brightness = (pr * 299 + pg * 587 + pb * 114) / 1000;
-                let primaryR = pr, primaryG = pg, primaryB = pb;
-                if (brightness > 200 && sortedColors.length > 1) {
-                    const [r2, g2, b2] = sortedColors[1];
-                    primaryR = r2;
-                    primaryG = g2;
-                    primaryB = b2;
-                }
-
-                const primary = `rgb(${primaryR},${primaryG},${primaryB})`;
-                const primaryDark = `rgb(${Math.max(0, primaryR - 40)},${Math.max(0, primaryG - 40)},${Math.max(0, primaryB - 40)})`;
-                const primaryLight = `rgb(${Math.min(255, primaryR + 60)},${Math.min(255, primaryG + 60)},${Math.min(255, primaryB + 60)})`;
-                const primaryGlow = `rgba(${primaryR},${primaryG},${primaryB},0.2)`;
-                const shadowGold = `0 4px 24px rgba(${primaryR},${primaryG},${primaryB},0.35)`;
-
-                applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold);
-
-                console.log('🎨 Theme extracted from logo:', { primary, primaryDark, primaryLight });
-
-                renderDashboard();
-                renderTables();
-                renderSettings();
-
-            } catch (e) {
-                console.warn('⚠️ Could not extract theme from logo:', e);
-            }
-        };
-        img.onerror = function() {
-            console.warn('⚠️ Failed to load logo for theme extraction');
-        };
-        img.src = imageData;
-    } catch (e) {
-        console.warn('⚠️ Theme extraction error:', e);
-    }
 }
 
 // ============================================================
@@ -1603,7 +1413,7 @@ function lockApp() {
 }
 
 // ============================================================
-// MAIN APP — مع شيفت خاص لكل موظف
+// MAIN APP
 // ============================================================
 async function enterMainApp() {
     document.getElementById('headerBizName').textContent = business.name;
@@ -1642,7 +1452,7 @@ async function enterMainApp() {
 }
 
 // ============================================================
-// SHIFT لكل موظف
+// SHIFT لكل موظف (معدل لمعالجة null)
 // ============================================================
 async function loadOrOpenEmployeeShift() {
     if (!supabaseClient || !business || !currentUser) {
@@ -1654,7 +1464,31 @@ async function loadOrOpenEmployeeShift() {
     const employeeName = currentUser.name || 'موظف';
 
     if (!employeeId) {
-        console.warn('⚠️ Employee ID is null, cannot load shift');
+        console.warn('⚠️ Employee ID is null, creating shift without employee_id');
+        // إنشاء شيفت بدون employee_id
+        try {
+            const { data: basicShift, error: basicError } = await supabaseClient
+                .from('shifts')
+                .insert({
+                    business_id: business.id,
+                    employee_name: employeeName,
+                    opened_at: new Date().toISOString(),
+                    status: 'open',
+                    total_revenue: 0,
+                    total_expenses: 0,
+                    total_profit: 0
+                })
+                .select()
+                .single();
+
+            if (!basicError && basicShift) {
+                currentShift = basicShift;
+                updateShiftIndicator();
+                return basicShift;
+            }
+        } catch (e) {
+            console.error('Failed to create basic shift:', e);
+        }
         return null;
     }
 
@@ -1669,7 +1503,7 @@ async function loadOrOpenEmployeeShift() {
 
         if (error) {
             console.error('Error fetching shift:', error);
-            // إذا كان الجدول لا يحتوي على عمود employee_id، نحاول بدون تصفية
+            // محاولة بدون employee_id
             let { data: fallbackShift, error: fallbackError } = await supabaseClient
                 .from('shifts')
                 .select('*')
@@ -1679,7 +1513,6 @@ async function loadOrOpenEmployeeShift() {
 
             if (!fallbackError && fallbackShift) {
                 shift = fallbackShift;
-                // تحديث الشيفت ليرتبط بالموظف الحالي
                 await supabaseClient
                     .from('shifts')
                     .update({ employee_id: employeeId, employee_name: employeeName })
@@ -1709,7 +1542,7 @@ async function loadOrOpenEmployeeShift() {
                 console.log(`🔄 Shift opened for employee: ${employeeName}`);
             } else {
                 console.error('Error creating shift:', createError);
-                // محاولة إنشاء شيفت بدون employee_id (للتوافق مع الجداول القديمة)
+                // محاولة إنشاء شيفت بدون employee_id
                 const { data: basicShift, error: basicError } = await supabaseClient
                     .from('shifts')
                     .insert({
@@ -1737,30 +1570,6 @@ async function loadOrOpenEmployeeShift() {
 
     } catch (e) {
         console.error('Error in loadOrOpenEmployeeShift:', e);
-        // محاولة إنشاء شيفت بسيط بدون employee_id
-        try {
-            const { data: basicShift, error: basicError } = await supabaseClient
-                .from('shifts')
-                .insert({
-                    business_id: business.id,
-                    employee_name: currentUser?.name || 'موظف',
-                    opened_at: new Date().toISOString(),
-                    status: 'open',
-                    total_revenue: 0,
-                    total_expenses: 0,
-                    total_profit: 0
-                })
-                .select()
-                .single();
-
-            if (!basicError && basicShift) {
-                currentShift = basicShift;
-                updateShiftIndicator();
-                return basicShift;
-            }
-        } catch (e2) {
-            console.error('Failed to create basic shift:', e2);
-        }
         return null;
     }
 }
@@ -2905,7 +2714,7 @@ async function deleteMenuItem(itemId) {
 }
 
 // ============================================================
-// CATEGORY MANAGEMENT - إدارة التصنيفات
+// CATEGORY MANAGEMENT
 // ============================================================
 function openCategorySheet() {
     if (!hasPermission('manage_menu')) {
@@ -3493,6 +3302,5 @@ console.log('🍽️ Plate Pro — Full System with Employee Shifts & QR Page!')
 console.log('✅ Each employee has their own shift');
 console.log('✅ QR page is separate');
 console.log('✅ Granular permissions per role');
-console.log('✅ Theme from logo (optional)');
 console.log('✅ Kitchen orders for chef');
 console.log('✅ Ring notifications for new & ready orders');
