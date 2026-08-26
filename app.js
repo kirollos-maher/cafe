@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (نسخة شيفت واحد للمحل - معدلة)
+// app.js - كامل منطق التطبيق (نسخة مع Realtime Sync)
 // ============================================================
 
 // ============================================================
@@ -650,6 +650,7 @@ let selectedPaymentMethod = null;
 let orderStatus = {};
 let qrGenerated = false;
 let editingTableId = null;
+let realtimeSubscription = null; // للإشتراك في التزامن اللحظي
 
 // ============================================================
 // CUSTOMER PAGE STATE
@@ -936,6 +937,105 @@ function downloadQRPage() {
     link.download = 'QR_' + (business ? business.code : 'cafe') + '.png';
     link.href = document.getElementById('qrCodeImagePage').src;
     link.click();
+}
+
+// ============================================================
+// REALTIME SYNC - التزامن اللحظي بين الأجهزة
+// ============================================================
+function startRealtimeSync() {
+    if (!supabaseClient || !business) {
+        console.warn('⚠️ Cannot start realtime sync: missing client or business');
+        return;
+    }
+
+    if (realtimeSubscription) {
+        realtimeSubscription.unsubscribe();
+        realtimeSubscription = null;
+    }
+
+    console.log('🔄 Starting realtime sync for orders...');
+
+    realtimeSubscription = supabaseClient
+        .channel('orders-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'orders',
+                filter: `business_id=eq.${business.id}`
+            },
+            async (payload) => {
+                console.log('📡 Realtime update received:', payload);
+                
+                const { eventType, new: newRecord, old: oldRecord } = payload;
+                
+                if (eventType === 'INSERT') {
+                    orders[newRecord.id] = newRecord;
+                    if (!orderStatus[newRecord.id]) {
+                        orderStatus[newRecord.id] = newRecord.status || 'pending';
+                    }
+                    showRingNotification(
+                        '🔔 طلب جديد!',
+                        `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - ${newRecord.status || 'جديد'}`,
+                        'new_order'
+                    );
+                } else if (eventType === 'UPDATE') {
+                    if (orders[oldRecord.id]) {
+                        const oldStatus = oldRecord.status;
+                        const newStatus = newRecord.status;
+                        if (oldStatus !== newStatus) {
+                            if (newStatus === 'ready') {
+                                showRingNotification(
+                                    '🔔 طلب جاهز!',
+                                    `طاولة ${newRecord.table_id?.slice(0, 8) || '?'}`,
+                                    'order_ready'
+                                );
+                            }
+                        }
+                        orders[newRecord.id] = newRecord;
+                        orderStatus[newRecord.id] = newRecord.status || 'pending';
+                    }
+                } else if (eventType === 'DELETE') {
+                    delete orders[oldRecord.id];
+                    delete orderStatus[oldRecord.id];
+                }
+                
+                renderDashboard();
+                renderTables();
+                renderKitchenOrders();
+            }
+        )
+        .subscribe((status) => {
+            console.log('📡 Realtime subscription status:', status);
+        });
+
+    supabaseClient
+        .channel('tables-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'tables',
+                filter: `business_id=eq.${business.id}`
+            },
+            async (payload) => {
+                console.log('📡 Table update received:', payload);
+                await loadTables();
+                renderTables();
+                renderDashboard();
+            }
+        )
+        .subscribe();
+}
+
+function stopRealtimeSync() {
+    if (realtimeSubscription) {
+        realtimeSubscription.unsubscribe();
+        realtimeSubscription = null;
+        console.log('🔄 Realtime sync stopped');
+    }
 }
 
 // ============================================================
@@ -1441,6 +1541,7 @@ async function handleUnlock() {
 
 function lockApp() {
     currentUser = null;
+    stopRealtimeSync();
     document.getElementById('lockPinInput').value = '';
     proceedToLock();
 }
@@ -1458,8 +1559,9 @@ async function enterMainApp() {
     loadLogo();
     await loadAllData();
 
-    // فتح شيفت المحل
     await loadOrOpenShift();
+
+    startRealtimeSync();
 
     document.getElementById('dashBizName').textContent = business.name;
     updateLogoUI();
@@ -1482,7 +1584,6 @@ async function enterMainApp() {
     renderSettings();
     updateShiftIndicator();
 
-    // تحديث الشيفت كل 10 ثواني
     setInterval(async () => {
         if (!currentShift || currentShift.status !== 'open') {
             await loadOrOpenShift();
@@ -1504,7 +1605,6 @@ async function loadOrOpenShift() {
     }
 
     try {
-        // البحث عن شيفت مفتوح
         let { data: shift, error } = await supabaseClient
             .from('shifts')
             .select('*')
@@ -1514,28 +1614,12 @@ async function loadOrOpenShift() {
 
         if (error) {
             console.error('Error fetching shift:', error);
-            // إذا كان الخطأ بسبب عدم وجود عمود، نجرب بدون شرط
-            try {
-                let { data: fallbackShift } = await supabaseClient
-                    .from('shifts')
-                    .select('*')
-                    .eq('business_id', business.id)
-                    .eq('status', 'open')
-                    .maybeSingle();
-                if (fallbackShift) {
-                    shift = fallbackShift;
-                }
-            } catch (e2) {
-                console.error('Fallback also failed:', e2);
-            }
         }
 
-        // إذا لم يوجد شيفت مفتوح، أنشئ واحداً جديداً
         if (!shift) {
             console.log('🔄 No open shift found, creating new one...');
             
             try {
-                // محاولة إنشاء شيفت بالحقول الأساسية فقط
                 const { data: newShift, error: createError } = await supabaseClient
                     .from('shifts')
                     .insert({
@@ -1556,21 +1640,6 @@ async function loadOrOpenShift() {
                     showToast('✅ تم فتح شيفت جديد', 'success');
                 } else {
                     console.error('Error creating shift:', createError);
-                    // محاولة بسيطة بدون opened_by
-                    const { data: simpleShift, error: simpleError } = await supabaseClient
-                        .from('shifts')
-                        .insert({
-                            business_id: business.id,
-                            status: 'open'
-                        })
-                        .select()
-                        .single();
-                    
-                    if (!simpleError && simpleShift) {
-                        shift = simpleShift;
-                        console.log(`✅ Simple shift opened for business: ${business.name}`);
-                        showToast('✅ تم فتح شيفت جديد', 'success');
-                    }
                 }
             } catch (e) {
                 console.error('Error in shift creation:', e);
@@ -1584,7 +1653,6 @@ async function loadOrOpenShift() {
             updateShiftIndicator();
             return shift;
         } else {
-            // إذا فشل كل شيء، ننشئ شيفت افتراضي في الذاكرة
             currentShift = {
                 id: 'temp_' + Date.now(),
                 business_id: business.id,
@@ -1602,7 +1670,6 @@ async function loadOrOpenShift() {
 
     } catch (e) {
         console.error('Error in loadOrOpenShift:', e);
-        // إنشاء شيفت مؤقت في الذاكرة
         currentShift = {
             id: 'temp_' + Date.now(),
             business_id: business.id,
@@ -1629,7 +1696,6 @@ async function closeShift() {
         return null;
     }
 
-    // إذا كان شيفت مؤقت، لا نغلق في قاعدة البيانات
     if (currentShift.id && currentShift.id.toString().startsWith('temp_')) {
         showToast('⚠️ هذا شيفت مؤقت، سيتم إنشاء شيفت جديد تلقائياً', 'warning');
         currentShift = null;
@@ -1696,7 +1762,6 @@ async function openCloseShiftSheet() {
     }
 
     if (!currentShift) {
-        // محاولة فتح شيفت جديد
         await loadOrOpenShift();
         if (!currentShift) {
             showToast(t('no_open_shift'), 'warning');
@@ -2033,9 +2098,8 @@ async function renderTables() {
 }
 
 // ============================================================
-// KITCHEN - مختصرة للاختصار، باقي الدوال كما هي
+// KITCHEN
 // ============================================================
-
 function renderKitchenOrders() {
     const isChef = currentUser?.role === 'chef' || currentUser?.type === 'owner' || hasPermission('orders');
 
@@ -2089,9 +2153,8 @@ function renderKitchenOrders() {
 }
 
 // ============================================================
-// باقي الدوال (ملخصة للاختصار - نفس الكود السابق)
+// VIEW KITCHEN ORDER
 // ============================================================
-
 async function viewKitchenOrder(orderId) {
     window._activeKitchenOrderId = orderId;
     const order = Object.values(orders).find(o => o.id === orderId);
@@ -2186,7 +2249,7 @@ async function markAsReady(orderId) {
 }
 
 // ============================================================
-// TABLE SHEET
+// TABLE SHEET - مختصرة للاختصار
 // ============================================================
 function openTableSheet(tableId) {
     window._activeTableId = tableId;
@@ -2326,7 +2389,7 @@ function openTableSheet(tableId) {
 }
 
 // ============================================================
-// باقي الدوال - مختصرة للاختصار (نفس الكود السابق)
+// باقي الدوال الأساسية - مختصرة للاختصار
 // ============================================================
 
 function addItemToOrder(item) {
@@ -2995,24 +3058,60 @@ function openEmployeeSheet() {
 function setDefaultPermissions(role) {
     const defaults = {
         waiter: {
-            dashboard: false, tables: true, orders: true, menu: false, settings: false,
-            create_orders: true, add_expense: false, close_shift: false, print_receipt: true,
-            manage_menu: false, view_revenue: false, view_expenses: false
+            dashboard: false,
+            tables: true,
+            orders: false,
+            menu: false,
+            settings: false,
+            create_orders: true,
+            add_expense: false,
+            close_shift: false,
+            print_receipt: true,
+            manage_menu: false,
+            view_revenue: false,
+            view_expenses: false
         },
         chef: {
-            dashboard: false, tables: false, orders: true, menu: false, settings: false,
-            create_orders: false, add_expense: false, close_shift: false, print_receipt: false,
-            manage_menu: false, view_revenue: false, view_expenses: false
+            dashboard: false,
+            tables: false,
+            orders: true,
+            menu: false,
+            settings: false,
+            create_orders: false,
+            add_expense: false,
+            close_shift: false,
+            print_receipt: false,
+            manage_menu: false,
+            view_revenue: false,
+            view_expenses: false
         },
         cashier: {
-            dashboard: true, tables: true, orders: true, menu: false, settings: false,
-            create_orders: true, add_expense: true, close_shift: true, print_receipt: true,
-            manage_menu: false, view_revenue: true, view_expenses: true
+            dashboard: true,
+            tables: true,
+            orders: true,
+            menu: false,
+            settings: false,
+            create_orders: true,
+            add_expense: true,
+            close_shift: true,
+            print_receipt: true,
+            manage_menu: false,
+            view_revenue: true,
+            view_expenses: true
         },
         admin: {
-            dashboard: true, tables: true, orders: true, menu: true, settings: true,
-            create_orders: true, add_expense: true, close_shift: true, print_receipt: true,
-            manage_menu: true, view_revenue: true, view_expenses: true
+            dashboard: true,
+            tables: true,
+            orders: true,
+            menu: true,
+            settings: true,
+            create_orders: true,
+            add_expense: true,
+            close_shift: true,
+            print_receipt: true,
+            manage_menu: true,
+            view_revenue: true,
+            view_expenses: true
         }
     };
 
@@ -3329,6 +3428,7 @@ async function deleteTable(tableId) {
 // SWITCH BUSINESS
 // ============================================================
 function switchBusiness() {
+    stopRealtimeSync();
     localStorage.removeItem('platepro_business_code');
     localStorage.removeItem('platepro_logo');
     business = null;
@@ -3379,9 +3479,9 @@ async function tryAutoResume() {
     }
 }
 
-console.log('🍽️ Plate Pro — Full System with One Shift for the Whole Restaurant!');
+console.log('🍽️ Plate Pro — Full System with Realtime Sync!');
+console.log('✅ Real-time synchronization between devices');
 console.log('✅ One shift for the entire restaurant');
-console.log('✅ QR page is separate');
 console.log('✅ Granular permissions per role');
 console.log('✅ Kitchen orders for chef');
 console.log('✅ Ring notifications for new & ready orders');
