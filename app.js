@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (نسخة بدون ثيم اللوجو)
+// app.js - كامل منطق التطبيق (النسخة المتطورة)
 // ============================================================
 
 // ============================================================
@@ -214,6 +214,7 @@ const translations = {
         'no_open_shift': 'لا يوجد شيفت مفتوح',
         'orders': '📋 الطلبات',
         'generate': 'توليد',
+        'auto_theme': 'استخدام ألوان الشعار كثيم (اختياري)',
         'shift_open': 'شيفت مفتوح',
         'shift_closed': 'شيفت مقفول',
         'my_shift': 'شيفتي',
@@ -409,6 +410,7 @@ const translations = {
         'no_open_shift': 'No open shift',
         'orders': '📋 Orders',
         'generate': 'Generate',
+        'auto_theme': 'Use logo colors as theme (optional)',
         'shift_open': 'Shift Open',
         'shift_closed': 'Shift Closed',
         'my_shift': 'My Shift',
@@ -455,12 +457,15 @@ function applyTranslations() {
 let serviceFeePercent = 10;
 let vatPercent = 14;
 let businessLogo = null;
+let useLogoTheme = false;
 
 function loadFeesSettings() {
     const saved = localStorage.getItem('platepro_service_fee');
     if (saved) serviceFeePercent = parseFloat(saved) || 10;
     const savedVat = localStorage.getItem('platepro_vat');
     if (savedVat) vatPercent = parseFloat(savedVat) || 14;
+    const savedTheme = localStorage.getItem('platepro_logo_theme');
+    useLogoTheme = savedTheme === 'true';
 }
 
 function saveFeesSettings() {
@@ -493,13 +498,18 @@ function openFeesSettings() {
 }
 
 // ============================================================
-// LOGO MANAGEMENT (بدون ثيم)
+// LOGO & THEME FROM LOGO - النسخة المتطورة
 // ============================================================
 function loadLogo() {
     const saved = localStorage.getItem('platepro_logo');
     if (saved) {
         businessLogo = saved;
         updateLogoUI();
+    }
+    const savedTheme = localStorage.getItem('platepro_logo_theme');
+    useLogoTheme = savedTheme === 'true';
+    if (useLogoTheme && businessLogo) {
+        extractThemeFromLogo(businessLogo);
     }
 }
 
@@ -520,6 +530,7 @@ function openLogoSettings() {
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = businessLogo ? 'inline-flex' : 'none';
     document.getElementById('logoError').textContent = '';
+    document.getElementById('autoThemeFromLogo').checked = useLogoTheme;
     if (businessLogo) {
         document.getElementById('logoPreviewImg').src = businessLogo;
         document.getElementById('logoPreview').style.display = 'block';
@@ -561,9 +572,67 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// تطبيق ألوان الشعار على كل العناصر
+function applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold) {
+    // تطبيق على الجذور
+    document.documentElement.setAttribute('data-logo-theme', 'true');
+    document.documentElement.style.setProperty('--logo-primary', primary);
+    document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
+    document.documentElement.style.setProperty('--logo-primary-light', primaryLight);
+    document.documentElement.style.setProperty('--logo-primary-glow', primaryGlow);
+    document.documentElement.style.setProperty('--logo-shadow-gold', shadowGold);
+    
+    // تحديث الخلفية العامة
+    document.body.style.background = `linear-gradient(135deg, ${primaryLight}22, var(--bg))`;
+    
+    // تحديث الهيدر
+    const header = document.querySelector('.app-header');
+    if (header) header.style.borderBottom = `2px solid ${primary}`;
+    
+    // تحديث بطاقات الإيراد
+    document.querySelectorAll('.stat-card.revenue').forEach(el => {
+        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
+    });
+    
+    // تحديث الأزرار الرئيسية
+    document.querySelectorAll('.btn-primary').forEach(el => {
+        el.style.background = primary;
+        el.style.boxShadow = shadowGold;
+    });
+    
+    // تحديث البادجات الذهبية
+    document.querySelectorAll('.badge-gold').forEach(el => {
+        el.style.background = primary;
+        el.style.borderColor = primaryDark;
+    });
+    
+    // تحديث هيدر العميل
+    document.querySelectorAll('.customer-hero').forEach(el => {
+        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
+    });
+    
+    // تحديث أزرار التنقل النشطة
+    document.querySelectorAll('.nav-btn.active').forEach(el => {
+        el.style.color = primary;
+    });
+    
+    // تحديث مؤشر الشيفت المفتوح
+    document.querySelectorAll('.shift-indicator').forEach(el => {
+        el.style.borderColor = primary;
+        el.style.color = primary;
+    });
+    
+    // تحديث بطاقات الطاولات المشغولة
+    document.querySelectorAll('.table-card.occupied').forEach(el => {
+        el.style.borderColor = primary;
+        el.style.background = `linear-gradient(145deg, ${primaryLight}44, var(--bg-card))`;
+    });
+}
+
 function saveLogo() {
     const fileInput = document.getElementById('logoInput');
     const errEl = document.getElementById('logoError');
+    const useTheme = document.getElementById('autoThemeFromLogo').checked;
 
     if (fileInput.files.length === 0) {
         errEl.textContent = t('error_general');
@@ -575,7 +644,14 @@ function saveLogo() {
     reader.onload = function(event) {
         businessLogo = event.target.result;
         localStorage.setItem('platepro_logo', businessLogo);
+        localStorage.setItem('platepro_logo_theme', useTheme ? 'true' : 'false');
+        useLogoTheme = useTheme;
         updateLogoUI();
+        if (useTheme) {
+            extractThemeFromLogo(businessLogo);
+        } else {
+            removeLogoTheme();
+        }
         closeSheet('settingsLogoOverlay');
         showToast(t('logo_saved'), 'success');
         renderSettings();
@@ -586,16 +662,144 @@ function saveLogo() {
     reader.readAsDataURL(file);
 }
 
+function removeLogoTheme() {
+    // إزالة الثيم من الجذور
+    document.documentElement.removeAttribute('data-logo-theme');
+    document.documentElement.style.removeProperty('--logo-primary');
+    document.documentElement.style.removeProperty('--logo-primary-dark');
+    document.documentElement.style.removeProperty('--logo-primary-light');
+    document.documentElement.style.removeProperty('--logo-primary-glow');
+    document.documentElement.style.removeProperty('--logo-shadow-gold');
+    
+    // إعادة الخلفية والألوان للوضع الافتراضي
+    document.body.style.background = '';
+    
+    const header = document.querySelector('.app-header');
+    if (header) header.style.borderBottom = '';
+    
+    document.querySelectorAll('.stat-card.revenue').forEach(el => {
+        el.style.background = '';
+    });
+    
+    document.querySelectorAll('.btn-primary').forEach(el => {
+        el.style.background = '';
+        el.style.boxShadow = '';
+    });
+    
+    document.querySelectorAll('.badge-gold').forEach(el => {
+        el.style.background = '';
+        el.style.borderColor = '';
+    });
+    
+    document.querySelectorAll('.customer-hero').forEach(el => {
+        el.style.background = '';
+    });
+    
+    document.querySelectorAll('.nav-btn.active').forEach(el => {
+        el.style.color = '';
+    });
+    
+    document.querySelectorAll('.shift-indicator').forEach(el => {
+        el.style.borderColor = '';
+        el.style.color = '';
+    });
+    
+    document.querySelectorAll('.table-card.occupied').forEach(el => {
+        el.style.borderColor = '';
+        el.style.background = '';
+    });
+}
+
 function removeLogo() {
     if (!confirm(t('remove_logo') + '؟')) return;
     businessLogo = null;
     localStorage.removeItem('platepro_logo');
+    localStorage.removeItem('platepro_logo_theme');
+    useLogoTheme = false;
+    
+    removeLogoTheme();
+    
     updateLogoUI();
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = 'none';
     document.getElementById('logoInput').value = '';
     showToast(t('logo_deleted'), 'success');
     renderSettings();
+}
+
+// استخراج الألوان من الشعار
+function extractThemeFromLogo(imageData) {
+    try {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = function() {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                const imageData2 = ctx.getImageData(0, 0, img.width, img.height);
+                const data = imageData2.data;
+
+                const colorMap = {};
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const a = data[i + 3];
+                    if (a < 128) continue;
+                    const cr = Math.round(r / 16) * 16;
+                    const cg = Math.round(g / 16) * 16;
+                    const cb = Math.round(b / 16) * 16;
+                    const key = `${cr},${cg},${cb}`;
+                    if (!colorMap[key]) colorMap[key] = 0;
+                    colorMap[key]++;
+                }
+
+                const sortedColors = Object.entries(colorMap)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([key]) => key.split(',').map(Number))
+                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200));
+
+                if (sortedColors.length === 0) return;
+
+                const [pr, pg, pb] = sortedColors[0];
+                const brightness = (pr * 299 + pg * 587 + pb * 114) / 1000;
+                let primaryR = pr, primaryG = pg, primaryB = pb;
+                if (brightness > 200 && sortedColors.length > 1) {
+                    const [r2, g2, b2] = sortedColors[1];
+                    primaryR = r2;
+                    primaryG = g2;
+                    primaryB = b2;
+                }
+
+                const primary = `rgb(${primaryR},${primaryG},${primaryB})`;
+                const primaryDark = `rgb(${Math.max(0, primaryR - 40)},${Math.max(0, primaryG - 40)},${Math.max(0, primaryB - 40)})`;
+                const primaryLight = `rgb(${Math.min(255, primaryR + 60)},${Math.min(255, primaryG + 60)},${Math.min(255, primaryB + 60)})`;
+                const primaryGlow = `rgba(${primaryR},${primaryG},${primaryB},0.2)`;
+                const shadowGold = `0 4px 24px rgba(${primaryR},${primaryG},${primaryB},0.35)`;
+
+                // تطبيق الألوان على كل العناصر
+                applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold);
+
+                console.log('🎨 Theme extracted from logo:', { primary, primaryDark, primaryLight });
+
+                renderDashboard();
+                renderTables();
+                renderSettings();
+
+            } catch (e) {
+                console.warn('⚠️ Could not extract theme from logo:', e);
+            }
+        };
+        img.onerror = function() {
+            console.warn('⚠️ Failed to load logo for theme extraction');
+        };
+        img.src = imageData;
+    } catch (e) {
+        console.warn('⚠️ Theme extraction error:', e);
+    }
 }
 
 // ============================================================
@@ -1413,7 +1617,7 @@ function lockApp() {
 }
 
 // ============================================================
-// MAIN APP
+// MAIN APP — مع شيفت خاص لكل موظف
 // ============================================================
 async function enterMainApp() {
     document.getElementById('headerBizName').textContent = business.name;
@@ -1425,7 +1629,8 @@ async function enterMainApp() {
     loadLogo();
     await loadAllData();
 
-    await loadOrOpenEmployeeShift();
+    // فتح شيفت المحل (بدلاً من شيفت الموظف)
+    await loadOrOpenShift();
 
     document.getElementById('dashBizName').textContent = business.name;
     updateLogoUI();
@@ -1452,115 +1657,51 @@ async function enterMainApp() {
 }
 
 // ============================================================
-// SHIFT لكل موظف (معدل لمعالجة null)
+// SHIFT MANAGEMENT - شيفت واحد للمحل
 // ============================================================
-async function loadOrOpenEmployeeShift() {
-    if (!supabaseClient || !business || !currentUser) {
-        console.warn('⚠️ Cannot load shift: missing client, business, or user');
-        return null;
-    }
 
-    const employeeId = currentUser.id;
-    const employeeName = currentUser.name || 'موظف';
-
-    if (!employeeId) {
-        console.warn('⚠️ Employee ID is null, creating shift without employee_id');
-        // إنشاء شيفت بدون employee_id
-        try {
-            const { data: basicShift, error: basicError } = await supabaseClient
-                .from('shifts')
-                .insert({
-                    business_id: business.id,
-                    employee_name: employeeName,
-                    opened_at: new Date().toISOString(),
-                    status: 'open',
-                    total_revenue: 0,
-                    total_expenses: 0,
-                    total_profit: 0
-                })
-                .select()
-                .single();
-
-            if (!basicError && basicShift) {
-                currentShift = basicShift;
-                updateShiftIndicator();
-                return basicShift;
-            }
-        } catch (e) {
-            console.error('Failed to create basic shift:', e);
-        }
+async function loadOrOpenShift() {
+    if (!supabaseClient || !business) {
+        console.warn('⚠️ Cannot load shift: missing client or business');
         return null;
     }
 
     try {
+        // البحث عن شيفت مفتوح
         let { data: shift, error } = await supabaseClient
             .from('shifts')
             .select('*')
             .eq('business_id', business.id)
-            .eq('employee_id', employeeId)
             .eq('status', 'open')
             .maybeSingle();
 
         if (error) {
             console.error('Error fetching shift:', error);
-            // محاولة بدون employee_id
-            let { data: fallbackShift, error: fallbackError } = await supabaseClient
-                .from('shifts')
-                .select('*')
-                .eq('business_id', business.id)
-                .eq('status', 'open')
-                .maybeSingle();
-
-            if (!fallbackError && fallbackShift) {
-                shift = fallbackShift;
-                await supabaseClient
-                    .from('shifts')
-                    .update({ employee_id: employeeId, employee_name: employeeName })
-                    .eq('id', fallbackShift.id);
-            }
         }
 
         if (!shift) {
-            // إنشاء شيفت جديد للموظف
+            // إنشاء شيفت جديد للمحل
             const { data: newShift, error: createError } = await supabaseClient
                 .from('shifts')
                 .insert({
                     business_id: business.id,
-                    employee_id: employeeId,
-                    employee_name: employeeName,
                     opened_at: new Date().toISOString(),
                     status: 'open',
                     total_revenue: 0,
                     total_expenses: 0,
-                    total_profit: 0
+                    total_profit: 0,
+                    opened_by: currentUser?.name || 'نظام'
                 })
                 .select()
                 .single();
 
             if (!createError && newShift) {
                 shift = newShift;
-                console.log(`🔄 Shift opened for employee: ${employeeName}`);
+                console.log(`🔄 Shift opened for business: ${business.name}`);
+                showToast('✅ تم فتح شيفت جديد', 'success');
             } else {
                 console.error('Error creating shift:', createError);
-                // محاولة إنشاء شيفت بدون employee_id
-                const { data: basicShift, error: basicError } = await supabaseClient
-                    .from('shifts')
-                    .insert({
-                        business_id: business.id,
-                        employee_name: employeeName,
-                        opened_at: new Date().toISOString(),
-                        status: 'open',
-                        total_revenue: 0,
-                        total_expenses: 0,
-                        total_profit: 0
-                    })
-                    .select()
-                    .single();
-
-                if (!basicError && basicShift) {
-                    shift = basicShift;
-                    console.log(`🔄 Basic shift opened for employee: ${employeeName}`);
-                }
+                return null;
             }
         }
 
@@ -1569,13 +1710,143 @@ async function loadOrOpenEmployeeShift() {
         return shift;
 
     } catch (e) {
-        console.error('Error in loadOrOpenEmployeeShift:', e);
+        console.error('Error in loadOrOpenShift:', e);
         return null;
     }
 }
 
-async function closeEmployeeShift() {
-    if (!supabaseClient || !currentShift) return;
+// ============================================================
+// CLOSE SHIFT - إقفال شيفت المحل
+// ============================================================
+async function closeShift() {
+    if (!supabaseClient || !currentShift) {
+        showToast('⚠️ لا يوجد شيفت مفتوح', 'warning');
+        return null;
+    }
+
+    // التحقق من الصلاحية
+    if (!hasPermission('close_shift') && currentUser?.type !== 'owner') {
+        showToast(t('error_permission'), 'error');
+        return null;
+    }
+
+    try {
+        // حساب الإيرادات
+        const { data: completedOrders, error: ordersError } = await supabaseClient
+            .from('orders')
+            .select('total')
+            .eq('business_id', business.id)
+            .eq('status', 'paid')
+            .gte('created_at', currentShift.opened_at);
+
+        if (ordersError) throw ordersError;
+
+        const revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+        // حساب المصروفات
+        const { data: expenses, error: expensesError } = await supabaseClient
+            .from('expenses')
+            .select('amount')
+            .eq('shift_id', currentShift.id);
+
+        if (expensesError) throw expensesError;
+
+        const totalExpenses = (expenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
+
+        const profit = revenue - totalExpenses;
+
+        // إقفال الشيفت
+        const { error: updateError } = await supabaseClient
+            .from('shifts')
+            .update({
+                status: 'closed',
+                closed_at: new Date().toISOString(),
+                closed_by: currentUser?.name || 'نظام',
+                total_revenue: revenue,
+                total_expenses: totalExpenses,
+                total_profit: profit
+            })
+            .eq('id', currentShift.id);
+
+        if (updateError) throw updateError;
+
+        showToast(`✅ تم إقفال الشيفت - الإيراد: ${money(revenue)}`, 'success');
+        currentShift = null;
+        updateShiftIndicator();
+        renderDashboard();
+        renderSettings();
+
+        return { revenue, totalExpenses, profit };
+
+    } catch (e) {
+        console.error('Error closing shift:', e);
+        showToast(t('shift_close_failed'), 'error');
+        throw e;
+    }
+}
+
+// ============================================================
+// SHIFT HISTORY - سجل الشيفتات
+// ============================================================
+async function renderShiftHistory() {
+    const el = document.getElementById('settingsShiftHistory');
+    if (!el) return;
+
+    if (!supabaseClient) return;
+    
+    try {
+        const { data: shifts, error } = await supabaseClient
+            .from('shifts')
+            .select('*')
+            .eq('business_id', business.id)
+            .eq('status', 'closed')
+            .order('closed_at', { ascending: false })
+            .limit(20);
+
+        if (error) {
+            console.error('Error fetching shift history:', error);
+            el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ خطأ في تحميل سجل الشيفتات</div>`;
+            return;
+        }
+
+        if (!shifts || shifts.length === 0) {
+            el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
+            return;
+        }
+
+        el.innerHTML = shifts.map(shift =>
+            `<div class="list-row">
+                <div>
+                    <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
+                    <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.closed_by || 'نظام'}</div>
+                </div>
+                <div>
+                    <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
+                    <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
+                </div>
+            </div>`
+        ).join('');
+    } catch (e) {
+        console.error('Error in renderShiftHistory:', e);
+        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
+    }
+}
+
+// ============================================================
+// OPEN CLOSE SHIFT SHEET - عرض ملخص قبل الإقفال
+// ============================================================
+async function openCloseShiftSheet() {
+    if (!hasPermission('close_shift') && currentUser?.type !== 'owner') {
+        showToast(t('error_permission'), 'error');
+        return;
+    }
+
+    if (!currentShift) {
+        showToast(t('no_open_shift'), 'warning');
+        return;
+    }
+
+    if (!supabaseClient) return;
 
     try {
         const { data: completedOrders } = await supabaseClient
@@ -1596,32 +1867,55 @@ async function closeEmployeeShift() {
 
         const profit = revenue - totalExpenses;
 
-        await supabaseClient
-            .from('shifts')
-            .update({
-                status: 'closed',
-                closed_at: new Date().toISOString(),
-                closed_by: currentUser?.name || 'system',
-                total_revenue: revenue,
-                total_expenses: totalExpenses,
-                total_profit: profit
-            })
-            .eq('id', currentShift.id);
+        document.getElementById('closeShiftSummary').innerHTML = `
+            <div class="list-row">
+                <div class="row-title">📅 تاريخ الفتح</div>
+                <div class="row-value mono">${new Date(currentShift.opened_at).toLocaleString()}</div>
+            </div>
+            <div class="list-row">
+                <div class="row-title">👤 فتح بواسطة</div>
+                <div class="row-value mono">${currentShift.opened_by || 'نظام'}</div>
+            </div>
+            <div class="list-row">
+                <div class="row-title">${t('shift_revenue')}</div>
+                <div class="row-value mono" style="color:var(--success);">${money(revenue)}</div>
+            </div>
+            <div class="list-row">
+                <div class="row-title">${t('shift_expenses')}</div>
+                <div class="row-value mono" style="color:var(--danger);">${money(totalExpenses)}</div>
+            </div>
+            <div class="list-row" style="border-bottom: 2px solid var(--primary); padding-bottom: 12px;">
+                <div class="row-title" style="font-size:16px; font-weight:800;">${t('shift_profit')}</div>
+                <div class="row-value mono" style="font-size:18px; color:var(--primary-dark);">${money(profit)}</div>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">
+                ⚠️ تأكد من تحصيل جميع المدفوعات قبل الإقفال
+            </div>
+        `;
 
-        showToast(t('shift_closed'), 'success');
-        currentShift = null;
-        updateShiftIndicator();
-        renderDashboard();
-        renderSettings();
+        document.getElementById('confirmCloseShiftBtn').onclick = async function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإقفال...';
+            
+            try {
+                await closeShift();
+                closeSheet('closeShiftOverlay');
+            } catch (e) {
+                showToast(t('shift_close_failed'), 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span data-i18n="confirm_close">تأكيد الإقفال</span>';
+            }
+        };
 
-        return { revenue, totalExpenses, profit };
-
+        openSheet('closeShiftOverlay');
     } catch (e) {
-        console.error('Error closing shift:', e);
-        showToast(t('shift_close_failed'), 'error');
-        throw e;
+        console.error('Error in openCloseShiftSheet:', e);
+        showToast(t('error_general'), 'error');
     }
 }
+
 
 // ============================================================
 // AUTO REFRESH
@@ -2714,7 +3008,7 @@ async function deleteMenuItem(itemId) {
 }
 
 // ============================================================
-// CATEGORY MANAGEMENT
+// CATEGORY MANAGEMENT - إدارة التصنيفات
 // ============================================================
 function openCategorySheet() {
     if (!hasPermission('manage_menu')) {
@@ -2892,50 +3186,38 @@ async function openCloseShiftSheet() {
 }
 
 // ============================================================
-// SHIFT HISTORY — عرض شيفتات الموظفين (معدل)
+// SHIFT HISTORY — عرض شيفتات الموظفين
 // ============================================================
 async function renderShiftHistory() {
     const el = document.getElementById('settingsShiftHistory');
     if (!el) return;
 
     if (!supabaseClient) return;
-    
-    try {
-        const { data: shifts, error } = await supabaseClient
-            .from('shifts')
-            .select('*')
-            .eq('business_id', business.id)
-            .eq('status', 'closed')
-            .order('closed_at', { ascending: false })
-            .limit(20);
+    const { data: shifts } = await supabaseClient
+        .from('shifts')
+        .select('*')
+        .eq('business_id', business.id)
+        .eq('status', 'closed')
+        .order('closed_at', { ascending: false })
+        .limit(20);
 
-        if (error) {
-            console.error('Error fetching shift history:', error);
-            el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ خطأ في تحميل سجل الشيفتات</div>`;
-            return;
-        }
-
-        if (!shifts || shifts.length === 0) {
-            el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
-            return;
-        }
-
-        el.innerHTML = shifts.map(shift =>
-            `<div class="list-row">
-                                <div>
-                                    <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
-                                    <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.employee_name || shift.closed_by || 'موظف'}</div>
-                                </div>
-                                <div>
-                                    <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
-                                    <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
-                                </div>
-                            </div>`
-        ).join('');
-    } catch (e) {
-        console.error('Error in renderShiftHistory:', e);
-        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
+    if (!shifts || shifts.length === 0) {
+        el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
+        return;
     }
+
+    el.innerHTML = shifts.map(shift =>
+        `<div class="list-row">
+                            <div>
+                                <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
+                                <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.employee_name || 'موظف'}</div>
+                            </div>
+                            <div>
+                                <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
+                                <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
+                            </div>
+                        </div>`
+    ).join('');
 }
 
 // ============================================================
@@ -3302,5 +3584,6 @@ console.log('🍽️ Plate Pro — Full System with Employee Shifts & QR Page!')
 console.log('✅ Each employee has their own shift');
 console.log('✅ QR page is separate');
 console.log('✅ Granular permissions per role');
+console.log('✅ Theme from logo (optional)');
 console.log('✅ Kitchen orders for chef');
 console.log('✅ Ring notifications for new & ready orders');
