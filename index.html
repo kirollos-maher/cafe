@@ -8,9 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
-    <!-- أيقونة المفضلة (اختياري) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -98,6 +97,26 @@
                 <span class="shift-indicator" id="shiftIndicator"><span class="shift-dot"></span> <span id="shiftStatusLabel">شيفت مفتوح</span></span>
                 <button class="btn btn-ghost btn-sm" onclick="toggleLanguage()" style="padding:4px 10px;font-size:12px;"><i class="fa-solid fa-language"></i> <span id="langToggleLabel">English</span></button>
                 <div class="icon-btn"><span class="live-dot"></span></div>
+                
+                <!-- زر القائمة (ثلاث شرط) -->
+                <div class="hamburger-menu">
+                    <button class="hamburger-btn" onclick="toggleHamburgerMenu()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="hamburger-dropdown" id="hamburgerDropdown">
+                        <button class="dropdown-item" onclick="navigateTo('view-qr'); closeHamburgerMenu();">
+                            <i class="fa-solid fa-qrcode"></i> QR Code
+                        </button>
+                        <button class="dropdown-item" onclick="navigateTo('view-shift-history'); closeHamburgerMenu();">
+                            <i class="fa-solid fa-clock-rotate-left"></i> سجل الشيفتات
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="navigateTo('view-settings'); closeHamburgerMenu();">
+                            <i class="fa-solid fa-sliders"></i> الإعدادات
+                        </button>
+                    </div>
+                </div>
+                
                 <button class="icon-btn" id="lockAppBtn"><i class="fa-solid fa-lock"></i></button>
             </div>
         </div>
@@ -131,9 +150,6 @@
                 <button class="btn btn-primary btn-block" onclick="openExpenseSheet()" id="dashExpenseBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="add_expense">إضافة مصروف</span></button>
                 <button class="btn btn-danger btn-block" onclick="openCloseShiftSheet()" id="dashCloseShiftBtn"><i class="fa-solid fa-lock"></i> <span data-i18n="close_shift">إقفال الشيفت</span></button>
             </div>
-
-            <div class="section-title" data-i18n="qr_code">📱 طلب من العميل</div>
-            <button class="btn btn-outline btn-block" onclick="navigateTo('view-qr')"><i class="fa-solid fa-qrcode"></i> <span data-i18n="show_qr">عرض QR Code</span></button>
         </div>
 
         <!-- TABLES -->
@@ -179,6 +195,57 @@
                     </div>
                 </div>
                 <button class="btn btn-ghost btn-block" onclick="navigateTo('view-dashboard')"><i class="fa-solid fa-arrow-right"></i> <span data-i18n="back">رجوع</span></button>
+            </div>
+        </div>
+
+        <!-- SHIFT HISTORY PAGE -->
+        <div class="view" id="view-shift-history">
+            <div class="shift-history-page">
+                <div class="section-title">📋 سجل الشيفتات</div>
+                
+                <div class="filter-tabs" id="shiftFilterTabs">
+                    <button class="btn active" data-filter="daily" onclick="filterShiftHistory('daily')">📅 يومي</button>
+                    <button class="btn" data-filter="weekly" onclick="filterShiftHistory('weekly')">📆 أسبوعي</button>
+                    <button class="btn" data-filter="monthly" onclick="filterShiftHistory('monthly')">📊 شهري</button>
+                </div>
+                
+                <div id="shiftHistoryListPage"></div>
+                
+                <button class="btn btn-ghost btn-block" style="margin-top:16px;" onclick="navigateTo('view-dashboard')">
+                    <i class="fa-solid fa-arrow-right"></i> رجوع للرئيسية
+                </button>
+            </div>
+        </div>
+
+        <!-- SHIFT DETAIL PAGE -->
+        <div class="view" id="view-shift-detail">
+            <div class="shift-detail-page">
+                <button class="btn btn-ghost btn-sm back-btn" onclick="navigateTo('view-shift-history')">
+                    <i class="fa-solid fa-arrow-right"></i> رجوع
+                </button>
+                
+                <div class="shift-header" id="shiftDetailHeader">
+                    <div class="shift-date" id="shiftDetailDate">—</div>
+                    <div class="shift-meta" id="shiftDetailMeta">—</div>
+                </div>
+                
+                <div class="shift-stats" id="shiftDetailStats">
+                    <div class="stat-box">
+                        <div class="stat-number" id="detailRevenue">0</div>
+                        <div class="stat-label">💰 الإيراد</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="detailOrders">0</div>
+                        <div class="stat-label">📋 الطلبات</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="detailTables">0</div>
+                        <div class="stat-label">🪑 الطاولات</div>
+                    </div>
+                </div>
+                
+                <div class="section-title">🪑 الطاولات والطلبات</div>
+                <div id="shiftDetailOrders"></div>
             </div>
         </div>
 
@@ -459,7 +526,7 @@
         </div>
     </div>
 
-    <!-- Shift History Sheet -->
+    <!-- Shift History Sheet (القديم - للتوافق) -->
     <div class="overlay" id="shiftHistoryOverlay">
         <div class="sheet">
             <div class="sheet-handle"></div>
