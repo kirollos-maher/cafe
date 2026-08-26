@@ -1,5 +1,9 @@
 // ============================================================
-// config.js - إعدادات Supabase
+// app.js - كامل منطق التطبيق (النسخة المتطورة)
+// ============================================================
+
+// ============================================================
+// استيراد الـ supabaseClient من window
 // ============================================================
 const supabaseClient = window.supabaseClient;
 
@@ -13,6 +17,7 @@ if (!supabaseClient) {
 } else {
     console.log('✅ supabaseClient is ready in app.js');
 }
+
 // ============================================================
 // TRANSLATIONS
 // ============================================================
@@ -212,7 +217,8 @@ const translations = {
         'auto_theme': 'استخدام ألوان الشعار كثيم (اختياري)',
         'shift_open': 'شيفت مفتوح',
         'shift_closed': 'شيفت مقفول',
-        'my_shift': 'شيفتي'
+        'my_shift': 'شيفتي',
+        'menu_categories': '📂 التصنيفات'
     },
     en: {
         'platepro': '✦ PLATE PRO ✦',
@@ -407,7 +413,8 @@ const translations = {
         'auto_theme': 'Use logo colors as theme (optional)',
         'shift_open': 'Shift Open',
         'shift_closed': 'Shift Closed',
-        'my_shift': 'My Shift'
+        'my_shift': 'My Shift',
+        'menu_categories': '📂 Categories'
     }
 };
 
@@ -491,7 +498,7 @@ function openFeesSettings() {
 }
 
 // ============================================================
-// LOGO & THEME FROM LOGO
+// LOGO & THEME FROM LOGO - النسخة المتطورة
 // ============================================================
 function loadLogo() {
     const saved = localStorage.getItem('platepro_logo');
@@ -565,6 +572,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// تطبيق ألوان الشعار على كل العناصر
+function applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold) {
+    // تطبيق على الجذور
+    document.documentElement.setAttribute('data-logo-theme', 'true');
+    document.documentElement.style.setProperty('--logo-primary', primary);
+    document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
+    document.documentElement.style.setProperty('--logo-primary-light', primaryLight);
+    document.documentElement.style.setProperty('--logo-primary-glow', primaryGlow);
+    document.documentElement.style.setProperty('--logo-shadow-gold', shadowGold);
+    
+    // تحديث الخلفية العامة
+    document.body.style.background = `linear-gradient(135deg, ${primaryLight}22, var(--bg))`;
+    
+    // تحديث الهيدر
+    const header = document.querySelector('.app-header');
+    if (header) header.style.borderBottom = `2px solid ${primary}`;
+    
+    // تحديث بطاقات الإيراد
+    document.querySelectorAll('.stat-card.revenue').forEach(el => {
+        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
+    });
+    
+    // تحديث الأزرار الرئيسية
+    document.querySelectorAll('.btn-primary').forEach(el => {
+        el.style.background = primary;
+        el.style.boxShadow = shadowGold;
+    });
+    
+    // تحديث البادجات الذهبية
+    document.querySelectorAll('.badge-gold').forEach(el => {
+        el.style.background = primary;
+        el.style.borderColor = primaryDark;
+    });
+    
+    // تحديث هيدر العميل
+    document.querySelectorAll('.customer-hero').forEach(el => {
+        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
+    });
+    
+    // تحديث أزرار التنقل النشطة
+    document.querySelectorAll('.nav-btn.active').forEach(el => {
+        el.style.color = primary;
+    });
+    
+    // تحديث مؤشر الشيفت المفتوح
+    document.querySelectorAll('.shift-indicator').forEach(el => {
+        el.style.borderColor = primary;
+        el.style.color = primary;
+    });
+    
+    // تحديث بطاقات الطاولات المشغولة
+    document.querySelectorAll('.table-card.occupied').forEach(el => {
+        el.style.borderColor = primary;
+        el.style.background = `linear-gradient(145deg, ${primaryLight}44, var(--bg-card))`;
+    });
+}
+
 function saveLogo() {
     const fileInput = document.getElementById('logoInput');
     const errEl = document.getElementById('logoError');
@@ -586,12 +650,7 @@ function saveLogo() {
         if (useTheme) {
             extractThemeFromLogo(businessLogo);
         } else {
-            document.documentElement.removeAttribute('data-logo-theme');
-            document.documentElement.style.removeProperty('--logo-primary');
-            document.documentElement.style.removeProperty('--logo-primary-dark');
-            document.documentElement.style.removeProperty('--logo-primary-light');
-            document.documentElement.style.removeProperty('--logo-primary-glow');
-            document.documentElement.style.removeProperty('--logo-shadow-gold');
+            removeLogoTheme();
         }
         closeSheet('settingsLogoOverlay');
         showToast(t('logo_saved'), 'success');
@@ -603,18 +662,63 @@ function saveLogo() {
     reader.readAsDataURL(file);
 }
 
-function removeLogo() {
-    if (!confirm(t('remove_logo') + '؟')) return;
-    businessLogo = null;
-    localStorage.removeItem('platepro_logo');
-    localStorage.removeItem('platepro_logo_theme');
-    useLogoTheme = false;
+function removeLogoTheme() {
+    // إزالة الثيم من الجذور
     document.documentElement.removeAttribute('data-logo-theme');
     document.documentElement.style.removeProperty('--logo-primary');
     document.documentElement.style.removeProperty('--logo-primary-dark');
     document.documentElement.style.removeProperty('--logo-primary-light');
     document.documentElement.style.removeProperty('--logo-primary-glow');
     document.documentElement.style.removeProperty('--logo-shadow-gold');
+    
+    // إعادة الخلفية والألوان للوضع الافتراضي
+    document.body.style.background = '';
+    
+    const header = document.querySelector('.app-header');
+    if (header) header.style.borderBottom = '';
+    
+    document.querySelectorAll('.stat-card.revenue').forEach(el => {
+        el.style.background = '';
+    });
+    
+    document.querySelectorAll('.btn-primary').forEach(el => {
+        el.style.background = '';
+        el.style.boxShadow = '';
+    });
+    
+    document.querySelectorAll('.badge-gold').forEach(el => {
+        el.style.background = '';
+        el.style.borderColor = '';
+    });
+    
+    document.querySelectorAll('.customer-hero').forEach(el => {
+        el.style.background = '';
+    });
+    
+    document.querySelectorAll('.nav-btn.active').forEach(el => {
+        el.style.color = '';
+    });
+    
+    document.querySelectorAll('.shift-indicator').forEach(el => {
+        el.style.borderColor = '';
+        el.style.color = '';
+    });
+    
+    document.querySelectorAll('.table-card.occupied').forEach(el => {
+        el.style.borderColor = '';
+        el.style.background = '';
+    });
+}
+
+function removeLogo() {
+    if (!confirm(t('remove_logo') + '؟')) return;
+    businessLogo = null;
+    localStorage.removeItem('platepro_logo');
+    localStorage.removeItem('platepro_logo_theme');
+    useLogoTheme = false;
+    
+    removeLogoTheme();
+    
     updateLogoUI();
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = 'none';
@@ -638,7 +742,6 @@ function extractThemeFromLogo(imageData) {
                 const imageData2 = ctx.getImageData(0, 0, img.width, img.height);
                 const data = imageData2.data;
 
-                // جمع الألوان الرئيسية
                 const colorMap = {};
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
@@ -646,7 +749,6 @@ function extractThemeFromLogo(imageData) {
                     const b = data[i + 2];
                     const a = data[i + 3];
                     if (a < 128) continue;
-                    // تقليل الدقة لتجميع الألوان المتشابهة
                     const cr = Math.round(r / 16) * 16;
                     const cg = Math.round(g / 16) * 16;
                     const cb = Math.round(b / 16) * 16;
@@ -655,24 +757,16 @@ function extractThemeFromLogo(imageData) {
                     colorMap[key]++;
                 }
 
-                // ترتيب الألوان حسب التكرار
                 const sortedColors = Object.entries(colorMap)
                     .sort((a, b) => b[1] - a[1])
                     .map(([key]) => key.split(',').map(Number))
-                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200)); // استبعاد الأبيض
+                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200));
 
                 if (sortedColors.length === 0) return;
 
-                // اللون الأساسي = أكثر لون متكرر غير أبيض
                 const [pr, pg, pb] = sortedColors[0];
-                // اللون الثانوي = ثاني لون أو نفس اللون بدرجة أغمق
-                let [sr, sg, sb] = sortedColors.length > 1 ? sortedColors[1] : [pr, pg, pb];
-
-                // إذا كان اللون الأساسي فاتح جداً، نستخدم اللون الثانوي
                 const brightness = (pr * 299 + pg * 587 + pb * 114) / 1000;
-                let primaryR = pr,
-                    primaryG = pg,
-                    primaryB = pb;
+                let primaryR = pr, primaryG = pg, primaryB = pb;
                 if (brightness > 200 && sortedColors.length > 1) {
                     const [r2, g2, b2] = sortedColors[1];
                     primaryR = r2;
@@ -680,24 +774,17 @@ function extractThemeFromLogo(imageData) {
                     primaryB = b2;
                 }
 
-                // توليد الألوان المشتقة
                 const primary = `rgb(${primaryR},${primaryG},${primaryB})`;
                 const primaryDark = `rgb(${Math.max(0, primaryR - 40)},${Math.max(0, primaryG - 40)},${Math.max(0, primaryB - 40)})`;
                 const primaryLight = `rgb(${Math.min(255, primaryR + 60)},${Math.min(255, primaryG + 60)},${Math.min(255, primaryB + 60)})`;
                 const primaryGlow = `rgba(${primaryR},${primaryG},${primaryB},0.2)`;
                 const shadowGold = `0 4px 24px rgba(${primaryR},${primaryG},${primaryB},0.35)`;
 
-                // تطبيق الثيم
-                document.documentElement.setAttribute('data-logo-theme', 'true');
-                document.documentElement.style.setProperty('--logo-primary', primary);
-                document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
-                document.documentElement.style.setProperty('--logo-primary-light', primaryLight);
-                document.documentElement.style.setProperty('--logo-primary-glow', primaryGlow);
-                document.documentElement.style.setProperty('--logo-shadow-gold', shadowGold);
+                // تطبيق الألوان على كل العناصر
+                applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold);
 
                 console.log('🎨 Theme extracted from logo:', { primary, primaryDark, primaryLight });
 
-                // تحديث الـ UI
                 renderDashboard();
                 renderTables();
                 renderSettings();
@@ -764,7 +851,7 @@ let menuItems = [];
 let menuCategories = [];
 let employees = [];
 let paymentMethods = [];
-let currentShift = null; // shift الخاص بالموظف الحالي
+let currentShift = null;
 let _orderItems = [];
 let selectedPaymentMethod = null;
 let orderStatus = {};
@@ -818,7 +905,6 @@ function navigateTo(viewId) {
             showToast(t('error_permission'), 'error');
             return;
         }
-        // QR page accessible to all with dashboard perm
         if (viewId === 'view-qr' && !perms.dashboard) {
             showToast(t('error_permission'), 'error');
             return;
@@ -981,7 +1067,6 @@ function updateUIByPermissions() {
     if (expenseBtn) expenseBtn.style.display = hasPermission('add_expense') ? 'flex' : 'none';
     if (closeShiftBtn) closeShiftBtn.style.display = hasPermission('close_shift') ? 'flex' : 'none';
 
-    // إخفاء الإيراد عن الوايتر والموظفين العاديين
     if (revenueCard) {
         const canViewRevenue = hasPermission('view_revenue') || currentUser?.type === 'owner';
         revenueCard.style.display = canViewRevenue ? 'block' : 'none';
@@ -1007,7 +1092,6 @@ function updateUIByPermissions() {
         }
     });
 
-    // إظهار زر QR للجميع (يحتاج dashboard)
     const qrBtn = document.querySelector('[onclick*="view-qr"]');
     if (qrBtn) {
         qrBtn.style.display = hasPermission('dashboard') ? 'flex' : 'none';
@@ -1545,7 +1629,6 @@ async function enterMainApp() {
     loadLogo();
     await loadAllData();
 
-    // إنشاء أو فتح شيفت خاص بالموظف الحالي
     await loadOrOpenEmployeeShift();
 
     document.getElementById('dashBizName').textContent = business.name;
@@ -1581,7 +1664,6 @@ async function loadOrOpenEmployeeShift() {
     const employeeId = currentUser.id;
     const employeeName = currentUser.name || 'موظف';
 
-    // البحث عن شيفت مفتوح لهذا الموظف
     let { data: shift } = await supabaseClient
         .from('shifts')
         .select('*')
@@ -1591,7 +1673,6 @@ async function loadOrOpenEmployeeShift() {
         .maybeSingle();
 
     if (!shift) {
-        // إنشاء شيفت جديد للموظف
         const { data: newShift, error } = await supabaseClient
             .from('shifts')
             .insert({
@@ -1624,7 +1705,6 @@ async function closeEmployeeShift() {
     if (!supabaseClient || !currentShift) return;
 
     try {
-        // حساب الإيرادات والمصروفات لهذا الشيفت
         const { data: completedOrders } = await supabaseClient
             .from('orders')
             .select('total')
@@ -1801,7 +1881,6 @@ async function renderDashboard() {
         revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
     }
 
-    // التحقق من صلاحية مشاهدة الإيراد
     const canViewRevenue = hasPermission('view_revenue') || currentUser?.type === 'owner';
     const revenueCard = document.querySelector('.stat-card.revenue');
     if (revenueCard) {
@@ -2762,7 +2841,7 @@ async function deleteMenuItem(itemId) {
 }
 
 // ============================================================
-// CATEGORY MANAGEMENT
+// CATEGORY MANAGEMENT - إدارة التصنيفات
 // ============================================================
 function openCategorySheet() {
     if (!hasPermission('manage_menu')) {
@@ -2780,22 +2859,79 @@ async function saveCategory() {
     const name = document.getElementById('categoryName').value.trim();
     const icon = document.getElementById('categoryIcon').value;
     const errEl = document.getElementById('categoryError');
-    if (!name) { errEl.textContent = t('error_general'); return; }
-    if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
+    
+    if (!name) { 
+        errEl.textContent = '⚠️ أدخل اسم التصنيف';
+        return; 
+    }
+    
+    if (!supabaseClient) { 
+        errEl.textContent = t('error_connection');
+        return; 
+    }
+    
     try {
-        await supabaseClient.from('menu_categories').insert({
+        const { data, error } = await supabaseClient.from('menu_categories').insert({
             business_id: business.id,
             name: name,
             icon: icon,
-            is_active: true
-        });
-        showToast(t('category_added'), 'success');
+            is_active: true,
+            sort_order: menuCategories.length + 1
+        }).select();
+        
+        if (error) throw error;
+        
+        showToast('✅ تم إضافة التصنيف بنجاح!', 'success');
         closeSheet('categoryOverlay');
         await loadMenuCategories();
         renderMenuView();
         renderMenuManagement();
         renderSettings();
-    } catch (e) { errEl.textContent = t('error_general'); }
+        renderMenuCategoriesList();
+    } catch (e) { 
+        errEl.textContent = t('error_general');
+        console.error(e);
+    }
+}
+
+// عرض قائمة التصنيفات في الإعدادات
+function renderMenuCategoriesList() {
+    const container = document.getElementById('settingsCategoriesList');
+    if (!container) return;
+    
+    if (menuCategories.length === 0) {
+        container.innerHTML = `<div class="empty" style="padding:12px;">${t('no_categories')}</div>`;
+        return;
+    }
+    
+    container.innerHTML = menuCategories.map(cat => `
+        <div class="list-row">
+            <div>
+                <div class="row-title"><i class="fa-solid ${cat.icon || 'fa-utensils'}"></i> ${escapeHtml(cat.name)}</div>
+                <div class="row-sub">${cat.is_active ? '✅ نشط' : '⛔ موقف'}</div>
+            </div>
+            <div class="row-actions">
+                <button class="btn btn-danger btn-xs" onclick="deleteCategory('${cat.id}')"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function deleteCategory(categoryId) {
+    if (!confirm('متأكد من حذف هذا التصنيف؟')) return;
+    if (!supabaseClient) return;
+    
+    try {
+        await supabaseClient.from('menu_categories').delete().eq('id', categoryId);
+        showToast('✅ تم حذف التصنيف', 'success');
+        await loadMenuCategories();
+        renderMenuView();
+        renderMenuManagement();
+        renderSettings();
+        renderMenuCategoriesList();
+    } catch (e) {
+        showToast(t('error_general'), 'error');
+    }
 }
 
 // ============================================================
@@ -2962,7 +3098,6 @@ function openEmployeeSheet() {
     document.getElementById('deleteEmployeeBtn').style.display = 'none';
     document.getElementById('employeeError').textContent = '';
 
-    // صلاحيات افتراضية حسب الدور
     setDefaultPermissions('waiter');
 
     document.getElementById('saveEmployeeBtn').onclick = saveEmployee;
@@ -3008,7 +3143,6 @@ function setDefaultPermissions(role) {
     document.getElementById('permViewExpenses').checked = perms.view_expenses;
 }
 
-// تحديث الصلاحيات تلقائياً عند تغيير الدور
 document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.getElementById('employeeRole');
     if (roleSelect) {
@@ -3140,6 +3274,10 @@ function renderSettings() {
                         <div class="list-row"><div class="row-title" data-i18n="vat_label">ضريبة القيمة المضافة (VAT)</div><div class="row-value mono">${vatPercent}%</div></div>
                         <button class="btn btn-primary btn-sm btn-block" onclick="openFeesSettings()"><i class="fa-solid fa-pen"></i> ${t('edit_fees')}</button>
                         
+                        <div class="section-title" data-i18n="menu_categories">📂 التصنيفات</div>
+                        <button class="btn btn-primary btn-sm" onclick="openCategorySheet()"><i class="fa-solid fa-plus"></i> إضافة تصنيف</button>
+                        <div class="panel" id="settingsCategoriesList"></div>
+                        
                         <div class="section-title" data-i18n="manage_tables">🪑 إدارة الطاولات</div>
                         <button class="btn btn-primary btn-sm" onclick="openTableManagementSheet()"><i class="fa-solid fa-plus"></i> ${t('add_table')}</button>
                         <div class="panel" id="settingsTablesList"></div>
@@ -3161,6 +3299,7 @@ function renderSettings() {
     renderSettingsPaymentMethods();
     renderSettingsEmployees();
     renderShiftHistory();
+    renderMenuCategoriesList();
 }
 
 function renderSettingsTables() {
