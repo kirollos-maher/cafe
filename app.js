@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (النسخة المتطورة)
+// app.js - كامل منطق التطبيق (نسخة شيفت واحد للمحل)
 // ============================================================
 
 // ============================================================
@@ -7,7 +7,6 @@
 // ============================================================
 const supabaseClient = window.supabaseClient;
 
-// التحقق من وجود العميل
 if (!supabaseClient) {
     console.error('❌ supabaseClient is not defined! Check config.js loading order.');
     document.addEventListener('DOMContentLoaded', function() {
@@ -214,10 +213,8 @@ const translations = {
         'no_open_shift': 'لا يوجد شيفت مفتوح',
         'orders': '📋 الطلبات',
         'generate': 'توليد',
-        'auto_theme': 'استخدام ألوان الشعار كثيم (اختياري)',
-        'shift_open': 'شيفت مفتوح',
-        'shift_closed': 'شيفت مقفول',
-        'my_shift': 'شيفتي',
+        'shift_open': '✅ شيفت مفتوح',
+        'shift_closed': '🔴 شيفت مقفول',
         'menu_categories': '📂 التصنيفات'
     },
     en: {
@@ -410,10 +407,8 @@ const translations = {
         'no_open_shift': 'No open shift',
         'orders': '📋 Orders',
         'generate': 'Generate',
-        'auto_theme': 'Use logo colors as theme (optional)',
-        'shift_open': 'Shift Open',
-        'shift_closed': 'Shift Closed',
-        'my_shift': 'My Shift',
+        'shift_open': '✅ Shift Open',
+        'shift_closed': '🔴 Shift Closed',
         'menu_categories': '📂 Categories'
     }
 };
@@ -457,15 +452,12 @@ function applyTranslations() {
 let serviceFeePercent = 10;
 let vatPercent = 14;
 let businessLogo = null;
-let useLogoTheme = false;
 
 function loadFeesSettings() {
     const saved = localStorage.getItem('platepro_service_fee');
     if (saved) serviceFeePercent = parseFloat(saved) || 10;
     const savedVat = localStorage.getItem('platepro_vat');
     if (savedVat) vatPercent = parseFloat(savedVat) || 14;
-    const savedTheme = localStorage.getItem('platepro_logo_theme');
-    useLogoTheme = savedTheme === 'true';
 }
 
 function saveFeesSettings() {
@@ -498,18 +490,13 @@ function openFeesSettings() {
 }
 
 // ============================================================
-// LOGO & THEME FROM LOGO - النسخة المتطورة
+// LOGO MANAGEMENT
 // ============================================================
 function loadLogo() {
     const saved = localStorage.getItem('platepro_logo');
     if (saved) {
         businessLogo = saved;
         updateLogoUI();
-    }
-    const savedTheme = localStorage.getItem('platepro_logo_theme');
-    useLogoTheme = savedTheme === 'true';
-    if (useLogoTheme && businessLogo) {
-        extractThemeFromLogo(businessLogo);
     }
 }
 
@@ -530,7 +517,6 @@ function openLogoSettings() {
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = businessLogo ? 'inline-flex' : 'none';
     document.getElementById('logoError').textContent = '';
-    document.getElementById('autoThemeFromLogo').checked = useLogoTheme;
     if (businessLogo) {
         document.getElementById('logoPreviewImg').src = businessLogo;
         document.getElementById('logoPreview').style.display = 'block';
@@ -572,67 +558,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// تطبيق ألوان الشعار على كل العناصر
-function applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold) {
-    // تطبيق على الجذور
-    document.documentElement.setAttribute('data-logo-theme', 'true');
-    document.documentElement.style.setProperty('--logo-primary', primary);
-    document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
-    document.documentElement.style.setProperty('--logo-primary-light', primaryLight);
-    document.documentElement.style.setProperty('--logo-primary-glow', primaryGlow);
-    document.documentElement.style.setProperty('--logo-shadow-gold', shadowGold);
-    
-    // تحديث الخلفية العامة
-    document.body.style.background = `linear-gradient(135deg, ${primaryLight}22, var(--bg))`;
-    
-    // تحديث الهيدر
-    const header = document.querySelector('.app-header');
-    if (header) header.style.borderBottom = `2px solid ${primary}`;
-    
-    // تحديث بطاقات الإيراد
-    document.querySelectorAll('.stat-card.revenue').forEach(el => {
-        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
-    });
-    
-    // تحديث الأزرار الرئيسية
-    document.querySelectorAll('.btn-primary').forEach(el => {
-        el.style.background = primary;
-        el.style.boxShadow = shadowGold;
-    });
-    
-    // تحديث البادجات الذهبية
-    document.querySelectorAll('.badge-gold').forEach(el => {
-        el.style.background = primary;
-        el.style.borderColor = primaryDark;
-    });
-    
-    // تحديث هيدر العميل
-    document.querySelectorAll('.customer-hero').forEach(el => {
-        el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
-    });
-    
-    // تحديث أزرار التنقل النشطة
-    document.querySelectorAll('.nav-btn.active').forEach(el => {
-        el.style.color = primary;
-    });
-    
-    // تحديث مؤشر الشيفت المفتوح
-    document.querySelectorAll('.shift-indicator').forEach(el => {
-        el.style.borderColor = primary;
-        el.style.color = primary;
-    });
-    
-    // تحديث بطاقات الطاولات المشغولة
-    document.querySelectorAll('.table-card.occupied').forEach(el => {
-        el.style.borderColor = primary;
-        el.style.background = `linear-gradient(145deg, ${primaryLight}44, var(--bg-card))`;
-    });
-}
-
 function saveLogo() {
     const fileInput = document.getElementById('logoInput');
     const errEl = document.getElementById('logoError');
-    const useTheme = document.getElementById('autoThemeFromLogo').checked;
 
     if (fileInput.files.length === 0) {
         errEl.textContent = t('error_general');
@@ -644,14 +572,7 @@ function saveLogo() {
     reader.onload = function(event) {
         businessLogo = event.target.result;
         localStorage.setItem('platepro_logo', businessLogo);
-        localStorage.setItem('platepro_logo_theme', useTheme ? 'true' : 'false');
-        useLogoTheme = useTheme;
         updateLogoUI();
-        if (useTheme) {
-            extractThemeFromLogo(businessLogo);
-        } else {
-            removeLogoTheme();
-        }
         closeSheet('settingsLogoOverlay');
         showToast(t('logo_saved'), 'success');
         renderSettings();
@@ -662,144 +583,16 @@ function saveLogo() {
     reader.readAsDataURL(file);
 }
 
-function removeLogoTheme() {
-    // إزالة الثيم من الجذور
-    document.documentElement.removeAttribute('data-logo-theme');
-    document.documentElement.style.removeProperty('--logo-primary');
-    document.documentElement.style.removeProperty('--logo-primary-dark');
-    document.documentElement.style.removeProperty('--logo-primary-light');
-    document.documentElement.style.removeProperty('--logo-primary-glow');
-    document.documentElement.style.removeProperty('--logo-shadow-gold');
-    
-    // إعادة الخلفية والألوان للوضع الافتراضي
-    document.body.style.background = '';
-    
-    const header = document.querySelector('.app-header');
-    if (header) header.style.borderBottom = '';
-    
-    document.querySelectorAll('.stat-card.revenue').forEach(el => {
-        el.style.background = '';
-    });
-    
-    document.querySelectorAll('.btn-primary').forEach(el => {
-        el.style.background = '';
-        el.style.boxShadow = '';
-    });
-    
-    document.querySelectorAll('.badge-gold').forEach(el => {
-        el.style.background = '';
-        el.style.borderColor = '';
-    });
-    
-    document.querySelectorAll('.customer-hero').forEach(el => {
-        el.style.background = '';
-    });
-    
-    document.querySelectorAll('.nav-btn.active').forEach(el => {
-        el.style.color = '';
-    });
-    
-    document.querySelectorAll('.shift-indicator').forEach(el => {
-        el.style.borderColor = '';
-        el.style.color = '';
-    });
-    
-    document.querySelectorAll('.table-card.occupied').forEach(el => {
-        el.style.borderColor = '';
-        el.style.background = '';
-    });
-}
-
 function removeLogo() {
     if (!confirm(t('remove_logo') + '؟')) return;
     businessLogo = null;
     localStorage.removeItem('platepro_logo');
-    localStorage.removeItem('platepro_logo_theme');
-    useLogoTheme = false;
-    
-    removeLogoTheme();
-    
     updateLogoUI();
     document.getElementById('logoPreview').style.display = 'none';
     document.getElementById('removeLogoBtn').style.display = 'none';
     document.getElementById('logoInput').value = '';
     showToast(t('logo_deleted'), 'success');
     renderSettings();
-}
-
-// استخراج الألوان من الشعار
-function extractThemeFromLogo(imageData) {
-    try {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = function() {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, img.width, img.height);
-                const imageData2 = ctx.getImageData(0, 0, img.width, img.height);
-                const data = imageData2.data;
-
-                const colorMap = {};
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    const a = data[i + 3];
-                    if (a < 128) continue;
-                    const cr = Math.round(r / 16) * 16;
-                    const cg = Math.round(g / 16) * 16;
-                    const cb = Math.round(b / 16) * 16;
-                    const key = `${cr},${cg},${cb}`;
-                    if (!colorMap[key]) colorMap[key] = 0;
-                    colorMap[key]++;
-                }
-
-                const sortedColors = Object.entries(colorMap)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([key]) => key.split(',').map(Number))
-                    .filter(([r, g, b]) => !(r > 200 && g > 200 && b > 200));
-
-                if (sortedColors.length === 0) return;
-
-                const [pr, pg, pb] = sortedColors[0];
-                const brightness = (pr * 299 + pg * 587 + pb * 114) / 1000;
-                let primaryR = pr, primaryG = pg, primaryB = pb;
-                if (brightness > 200 && sortedColors.length > 1) {
-                    const [r2, g2, b2] = sortedColors[1];
-                    primaryR = r2;
-                    primaryG = g2;
-                    primaryB = b2;
-                }
-
-                const primary = `rgb(${primaryR},${primaryG},${primaryB})`;
-                const primaryDark = `rgb(${Math.max(0, primaryR - 40)},${Math.max(0, primaryG - 40)},${Math.max(0, primaryB - 40)})`;
-                const primaryLight = `rgb(${Math.min(255, primaryR + 60)},${Math.min(255, primaryG + 60)},${Math.min(255, primaryB + 60)})`;
-                const primaryGlow = `rgba(${primaryR},${primaryG},${primaryB},0.2)`;
-                const shadowGold = `0 4px 24px rgba(${primaryR},${primaryG},${primaryB},0.35)`;
-
-                // تطبيق الألوان على كل العناصر
-                applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold);
-
-                console.log('🎨 Theme extracted from logo:', { primary, primaryDark, primaryLight });
-
-                renderDashboard();
-                renderTables();
-                renderSettings();
-
-            } catch (e) {
-                console.warn('⚠️ Could not extract theme from logo:', e);
-            }
-        };
-        img.onerror = function() {
-            console.warn('⚠️ Failed to load logo for theme extraction');
-        };
-        img.src = imageData;
-    } catch (e) {
-        console.warn('⚠️ Theme extraction error:', e);
-    }
 }
 
 // ============================================================
@@ -1109,9 +902,13 @@ function updateShiftIndicator() {
     if (currentShift && currentShift.status === 'open') {
         indicator.className = 'shift-indicator';
         label.textContent = t('shift_open');
+        label.style.color = 'var(--success)';
+        const time = new Date(currentShift.opened_at).toLocaleTimeString();
+        indicator.title = `فتح في: ${time}`;
     } else {
         indicator.className = 'shift-indicator closed';
         label.textContent = t('shift_closed');
+        label.style.color = 'var(--danger)';
     }
 }
 
@@ -1119,7 +916,10 @@ function updateShiftIndicator() {
 // QR CODE — صفحة منفصلة
 // ============================================================
 function generateQRCodePage() {
-    if (!business) return;
+    if (!business) {
+        showToast('⚠️ لا يوجد نشاط تجاري', 'error');
+        return;
+    }
     const bizId = business.id;
     const baseUrl = window.location.origin + window.location.pathname;
     const customerUrl = baseUrl + '?customer=true&biz=' + bizId;
@@ -1128,6 +928,7 @@ function generateQRCodePage() {
     qrGenerated = true;
     localStorage.setItem('platepro_customer_url', customerUrl);
     localStorage.setItem('platepro_business_id', bizId);
+    showToast(t('qr_generated'), 'success');
 }
 
 function downloadQRPage() {
@@ -1151,12 +952,22 @@ function initCustomerPage() {
 }
 
 async function loadCustomerData() {
-    const bizId = localStorage.getItem('platepro_business_id') ||
-        new URLSearchParams(window.location.search).get('biz');
-
+    const params = new URLSearchParams(window.location.search);
+    let bizId = params.get('biz');
+    
     if (!bizId) {
-        document.getElementById('customerBizName').textContent = '❌ رابط غير صحيح';
-        document.getElementById('customerMenuItems').innerHTML = `<div class="empty" style="padding:40px 16px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:40px;color:var(--danger);"></i><div style="font-size:16px; font-weight:700; margin-top:8px;">رابط غير صحيح</div><div style="font-size:13px; color:var(--text-muted);">تأكد من الرابط المستخدم</div></div>`;
+        bizId = localStorage.getItem('platepro_business_id');
+    }
+    
+    if (!bizId) {
+        document.getElementById('customerBizName').textContent = '❌ مطعم غير موجود';
+        document.getElementById('customerMenuItems').innerHTML = `
+            <div class="empty" style="padding:40px 16px;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size:40px;color:var(--danger);"></i>
+                <div style="font-size:16px; font-weight:700; margin-top:8px;">رابط غير صحيح</div>
+                <div style="font-size:13px; color:var(--text-muted);">تأكد من الرابط المستخدم</div>
+            </div>
+        `;
         return;
     }
 
@@ -1164,7 +975,13 @@ async function loadCustomerData() {
 
     if (!supabaseClient) {
         document.getElementById('customerBizName').textContent = '⚠️ خطأ في الاتصال';
-        document.getElementById('customerMenuItems').innerHTML = `<div class="empty" style="padding:40px 16px;"><i class="fa-solid fa-wifi" style="font-size:40px;color:var(--warning);"></i><div style="font-size:16px; font-weight:700; margin-top:8px;">خطأ في الاتصال</div><div style="font-size:13px; color:var(--text-muted);">تأكد من اتصال الإنترنت</div></div>`;
+        document.getElementById('customerMenuItems').innerHTML = `
+            <div class="empty" style="padding:40px 16px;">
+                <i class="fa-solid fa-wifi" style="font-size:40px;color:var(--warning);"></i>
+                <div style="font-size:16px; font-weight:700; margin-top:8px;">خطأ في الاتصال</div>
+                <div style="font-size:13px; color:var(--text-muted);">تأكد من اتصال الإنترنت</div>
+            </div>
+        `;
         return;
     }
 
@@ -1177,7 +994,13 @@ async function loadCustomerData() {
 
         if (bizError || !biz) {
             document.getElementById('customerBizName').textContent = '❌ مطعم غير موجود';
-            document.getElementById('customerMenuItems').innerHTML = `<div class="empty" style="padding:40px 16px;"><i class="fa-solid fa-store-slash" style="font-size:40px;color:var(--danger);"></i><div style="font-size:16px; font-weight:700; margin-top:8px;">المطعم غير موجود</div><div style="font-size:13px; color:var(--text-muted);">تأكد من الكود المستخدم</div></div>`;
+            document.getElementById('customerMenuItems').innerHTML = `
+                <div class="empty" style="padding:40px 16px;">
+                    <i class="fa-solid fa-store-slash" style="font-size:40px;color:var(--danger);"></i>
+                    <div style="font-size:16px; font-weight:700; margin-top:8px;">المطعم غير موجود</div>
+                    <div style="font-size:13px; color:var(--text-muted);">تأكد من الكود المستخدم</div>
+                </div>
+            `;
             return;
         }
 
@@ -1218,7 +1041,13 @@ async function loadCustomerData() {
     } catch (e) {
         console.error('Error loading customer data:', e);
         document.getElementById('customerBizName').textContent = '⚠️ خطأ في التحميل';
-        document.getElementById('customerMenuItems').innerHTML = `<div class="empty" style="padding:40px 16px;"><i class="fa-solid fa-circle-exclamation" style="font-size:40px;color:var(--danger);"></i><div style="font-size:16px; font-weight:700; margin-top:8px;">⚠️ حدث خطأ</div><div style="font-size:13px; color:var(--text-muted);">حاول تحديث الصفحة</div></div>`;
+        document.getElementById('customerMenuItems').innerHTML = `
+            <div class="empty" style="padding:40px 16px;">
+                <i class="fa-solid fa-circle-exclamation" style="font-size:40px;color:var(--danger);"></i>
+                <div style="font-size:16px; font-weight:700; margin-top:8px;">⚠️ حدث خطأ</div>
+                <div style="font-size:13px; color:var(--text-muted);">حاول تحديث الصفحة</div>
+            </div>
+        `;
     }
 }
 
@@ -1617,7 +1446,7 @@ function lockApp() {
 }
 
 // ============================================================
-// MAIN APP — مع شيفت خاص لكل موظف
+// MAIN APP
 // ============================================================
 async function enterMainApp() {
     document.getElementById('headerBizName').textContent = business.name;
@@ -1629,7 +1458,7 @@ async function enterMainApp() {
     loadLogo();
     await loadAllData();
 
-    // فتح شيفت المحل (بدلاً من شيفت الموظف)
+    // فتح شيفت المحل
     await loadOrOpenShift();
 
     document.getElementById('dashBizName').textContent = business.name;
@@ -1680,7 +1509,8 @@ async function loadOrOpenShift() {
         }
 
         if (!shift) {
-            // إنشاء شيفت جديد للمحل
+            console.log('🔄 No open shift found, creating new one...');
+            
             const { data: newShift, error: createError } = await supabaseClient
                 .from('shifts')
                 .insert({
@@ -1697,12 +1527,14 @@ async function loadOrOpenShift() {
 
             if (!createError && newShift) {
                 shift = newShift;
-                console.log(`🔄 Shift opened for business: ${business.name}`);
+                console.log(`✅ New shift opened for business: ${business.name}`);
                 showToast('✅ تم فتح شيفت جديد', 'success');
             } else {
                 console.error('Error creating shift:', createError);
                 return null;
             }
+        } else {
+            console.log(`✅ Shift already open since: ${new Date(shift.opened_at).toLocaleString()}`);
         }
 
         currentShift = shift;
@@ -1715,23 +1547,18 @@ async function loadOrOpenShift() {
     }
 }
 
-// ============================================================
-// CLOSE SHIFT - إقفال شيفت المحل
-// ============================================================
 async function closeShift() {
     if (!supabaseClient || !currentShift) {
         showToast('⚠️ لا يوجد شيفت مفتوح', 'warning');
         return null;
     }
 
-    // التحقق من الصلاحية
     if (!hasPermission('close_shift') && currentUser?.type !== 'owner') {
         showToast(t('error_permission'), 'error');
         return null;
     }
 
     try {
-        // حساب الإيرادات
         const { data: completedOrders, error: ordersError } = await supabaseClient
             .from('orders')
             .select('total')
@@ -1743,7 +1570,6 @@ async function closeShift() {
 
         const revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
-        // حساب المصروفات
         const { data: expenses, error: expensesError } = await supabaseClient
             .from('expenses')
             .select('amount')
@@ -1755,7 +1581,6 @@ async function closeShift() {
 
         const profit = revenue - totalExpenses;
 
-        // إقفال الشيفت
         const { error: updateError } = await supabaseClient
             .from('shifts')
             .update({
@@ -1785,56 +1610,6 @@ async function closeShift() {
     }
 }
 
-// ============================================================
-// SHIFT HISTORY - سجل الشيفتات
-// ============================================================
-async function renderShiftHistory() {
-    const el = document.getElementById('settingsShiftHistory');
-    if (!el) return;
-
-    if (!supabaseClient) return;
-    
-    try {
-        const { data: shifts, error } = await supabaseClient
-            .from('shifts')
-            .select('*')
-            .eq('business_id', business.id)
-            .eq('status', 'closed')
-            .order('closed_at', { ascending: false })
-            .limit(20);
-
-        if (error) {
-            console.error('Error fetching shift history:', error);
-            el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ خطأ في تحميل سجل الشيفتات</div>`;
-            return;
-        }
-
-        if (!shifts || shifts.length === 0) {
-            el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
-            return;
-        }
-
-        el.innerHTML = shifts.map(shift =>
-            `<div class="list-row">
-                <div>
-                    <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
-                    <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.closed_by || 'نظام'}</div>
-                </div>
-                <div>
-                    <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
-                    <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
-                </div>
-            </div>`
-        ).join('');
-    } catch (e) {
-        console.error('Error in renderShiftHistory:', e);
-        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
-    }
-}
-
-// ============================================================
-// OPEN CLOSE SHIFT SHEET - عرض ملخص قبل الإقفال
-// ============================================================
 async function openCloseShiftSheet() {
     if (!hasPermission('close_shift') && currentUser?.type !== 'owner') {
         showToast(t('error_permission'), 'error');
@@ -1877,6 +1652,10 @@ async function openCloseShiftSheet() {
                 <div class="row-value mono">${currentShift.opened_by || 'نظام'}</div>
             </div>
             <div class="list-row">
+                <div class="row-title">📋 الطلبات المدفوعة</div>
+                <div class="row-value mono">${completedOrders?.length || 0}</div>
+            </div>
+            <div class="list-row">
                 <div class="row-title">${t('shift_revenue')}</div>
                 <div class="row-value mono" style="color:var(--success);">${money(revenue)}</div>
             </div>
@@ -1888,7 +1667,7 @@ async function openCloseShiftSheet() {
                 <div class="row-title" style="font-size:16px; font-weight:800;">${t('shift_profit')}</div>
                 <div class="row-value mono" style="font-size:18px; color:var(--primary-dark);">${money(profit)}</div>
             </div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">
+            <div style="font-size:11px; color:var(--text-muted); margin-top:8px; text-align:center;">
                 ⚠️ تأكد من تحصيل جميع المدفوعات قبل الإقفال
             </div>
         `;
@@ -1901,6 +1680,11 @@ async function openCloseShiftSheet() {
             try {
                 await closeShift();
                 closeSheet('closeShiftOverlay');
+                setTimeout(async () => {
+                    await loadOrOpenShift();
+                    renderDashboard();
+                    renderSettings();
+                }, 500);
             } catch (e) {
                 showToast(t('shift_close_failed'), 'error');
             } finally {
@@ -1916,6 +1700,49 @@ async function openCloseShiftSheet() {
     }
 }
 
+async function renderShiftHistory() {
+    const el = document.getElementById('settingsShiftHistory');
+    if (!el) return;
+
+    if (!supabaseClient) return;
+    
+    try {
+        const { data: shifts, error } = await supabaseClient
+            .from('shifts')
+            .select('*')
+            .eq('business_id', business.id)
+            .eq('status', 'closed')
+            .order('closed_at', { ascending: false })
+            .limit(20);
+
+        if (error) {
+            console.error('Error fetching shift history:', error);
+            el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ خطأ في تحميل سجل الشيفتات</div>`;
+            return;
+        }
+
+        if (!shifts || shifts.length === 0) {
+            el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
+            return;
+        }
+
+        el.innerHTML = shifts.map(shift =>
+            `<div class="list-row">
+                <div>
+                    <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
+                    <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.closed_by || 'نظام'}</div>
+                </div>
+                <div>
+                    <div class="row-sub" style="color:var(--success);">💰 ${money(shift.total_revenue || 0)}</div>
+                    <div class="row-sub" style="color:var(--primary-dark);">📈 ${money(shift.total_profit || 0)}</div>
+                </div>
+            </div>`
+        ).join('');
+    } catch (e) {
+        console.error('Error in renderShiftHistory:', e);
+        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
+    }
+}
 
 // ============================================================
 // AUTO REFRESH
@@ -3008,7 +2835,7 @@ async function deleteMenuItem(itemId) {
 }
 
 // ============================================================
-// CATEGORY MANAGEMENT - إدارة التصنيفات
+// CATEGORY MANAGEMENT
 // ============================================================
 function openCategorySheet() {
     if (!hasPermission('manage_menu')) {
@@ -3061,7 +2888,6 @@ async function saveCategory() {
     }
 }
 
-// عرض قائمة التصنيفات في الإعدادات
 function renderMenuCategoriesList() {
     const container = document.getElementById('settingsCategoriesList');
     if (!container) return;
@@ -3133,91 +2959,6 @@ async function saveExpense() {
         closeSheet('expenseOverlay');
         renderDashboard();
     } catch (e) { errEl.textContent = t('error_general'); }
-}
-
-// ============================================================
-// SHIFT — إقفال الشيفت الخاص بالموظف
-// ============================================================
-async function openCloseShiftSheet() {
-    if (!hasPermission('close_shift')) {
-        showToast(t('error_permission'), 'error');
-        return;
-    }
-
-    if (!currentShift) { showToast(t('no_open_shift'), 'warning'); return; }
-    if (!supabaseClient) return;
-
-    try {
-        const { data: completedOrders } = await supabaseClient
-            .from('orders')
-            .select('total')
-            .eq('business_id', business.id)
-            .eq('status', 'paid')
-            .gte('created_at', currentShift.opened_at);
-
-        const revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-
-        const { data: expenses } = await supabaseClient
-            .from('expenses')
-            .select('amount')
-            .eq('shift_id', currentShift.id);
-
-        const totalExpenses = (expenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
-
-        document.getElementById('closeShiftSummary').innerHTML =
-            `<div class="list-row"><div class="row-title">${t('shift_revenue')}</div><div class="row-value mono">${money(revenue)}</div></div>
-                                <div class="list-row"><div class="row-title">${t('shift_expenses')}</div><div class="row-value mono">${money(totalExpenses)}</div></div>
-                                <div class="list-row"><div class="row-title">${t('shift_profit')}</div><div class="row-value mono" style="color:var(--primary-dark);">${money(revenue - totalExpenses)}</div></div>
-                                <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">👤 ${currentUser?.name || 'موظف'}</div>`;
-
-        document.getElementById('confirmCloseShiftBtn').onclick = async function() {
-            try {
-                await closeEmployeeShift();
-                closeSheet('closeShiftOverlay');
-            } catch (e) {
-                showToast(t('shift_close_failed'), 'error');
-            }
-        };
-
-        openSheet('closeShiftOverlay');
-    } catch (e) {
-        showToast(t('error_general'), 'error');
-    }
-}
-
-// ============================================================
-// SHIFT HISTORY — عرض شيفتات الموظفين
-// ============================================================
-async function renderShiftHistory() {
-    const el = document.getElementById('settingsShiftHistory');
-    if (!el) return;
-
-    if (!supabaseClient) return;
-    const { data: shifts } = await supabaseClient
-        .from('shifts')
-        .select('*')
-        .eq('business_id', business.id)
-        .eq('status', 'closed')
-        .order('closed_at', { ascending: false })
-        .limit(20);
-
-    if (!shifts || shifts.length === 0) {
-        el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
-        return;
-    }
-
-    el.innerHTML = shifts.map(shift =>
-        `<div class="list-row">
-                            <div>
-                                <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
-                                <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.employee_name || 'موظف'}</div>
-                            </div>
-                            <div>
-                                <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
-                                <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
-                            </div>
-                        </div>`
-    ).join('');
 }
 
 // ============================================================
@@ -3531,7 +3272,6 @@ function renderSettingsEmployees() {
 function switchBusiness() {
     localStorage.removeItem('platepro_business_code');
     localStorage.removeItem('platepro_logo');
-    localStorage.removeItem('platepro_logo_theme');
     business = null;
     deviceRecord = null;
     currentUser = null;
@@ -3580,10 +3320,9 @@ async function tryAutoResume() {
     }
 }
 
-console.log('🍽️ Plate Pro — Full System with Employee Shifts & QR Page!');
-console.log('✅ Each employee has their own shift');
+console.log('🍽️ Plate Pro — Full System with One Shift for the Whole Restaurant!');
+console.log('✅ One shift for the entire restaurant');
 console.log('✅ QR page is separate');
 console.log('✅ Granular permissions per role');
-console.log('✅ Theme from logo (optional)');
 console.log('✅ Kitchen orders for chef');
 console.log('✅ Ring notifications for new & ready orders');
