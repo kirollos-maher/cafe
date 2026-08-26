@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (نسخة مع Realtime Sync والإشعارات الصحيحة)
+// app.js - كامل منطق التطبيق (نسخة مع Realtime Sync & Shift History)
 // ============================================================
 
 // ============================================================
@@ -218,198 +218,7 @@ const translations = {
         'menu_categories': '📂 التصنيفات'
     },
     en: {
-        'platepro': '✦ PLATE PRO ✦',
-        'welcome': 'Welcome',
-        'business_code': 'Business Code',
-        'continue': 'Continue',
-        'back': 'Back',
-        'save': 'Save',
-        'cancel': 'Cancel',
-        'close': 'Close',
-        'delete': 'Delete',
-        'edit': 'Edit',
-        'add': 'Add',
-        'today_performance': '📊 Today\'s Performance',
-        'today_revenue': '💰 Today\'s Revenue',
-        'active_orders': '📋 Active Orders',
-        'occupied_tables': '🪑 Occupied Tables',
-        'available_tables': '🟢 Available Tables',
-        'quick_actions': '⚡ Quick Actions',
-        'add_expense': 'Add Expense',
-        'close_shift': 'Close Shift',
-        'scan_order': '📱 Scan & Order from your table',
-        'all': '🍽️ All',
-        'cart': '🛒 Cart',
-        'empty_cart': 'Cart is empty',
-        'subtotal': 'Subtotal',
-        'service_fee': 'Service Fee',
-        'vat': 'VAT',
-        'total': 'Total',
-        'confirm_order': 'Confirm Order',
-        'pending': '⏳ Pending',
-        'preparing': '🔪 Preparing',
-        'ready': '✅ Ready for Delivery',
-        'paid': '💳 Paid',
-        'cancelled': '❌ Cancelled',
-        'order': 'Order',
-        'table': 'Table',
-        'print_receipt': '🖨️ Print Receipt',
-        'print': 'Print',
-        'payment': '💳 Payment',
-        'select_payment': 'Select Payment Method',
-        'available': '🟢 Available',
-        'occupied': '🟡 Occupied',
-        'reserved': '🔵 Reserved',
-        'active': '✅ Active',
-        'inactive': '⛔ Inactive',
-        'waiter': 'Waiter',
-        'chef': 'Chef',
-        'cashier': 'Cashier',
-        'admin': 'Admin',
-        'settings': '⚙️ Settings',
-        'appearance': '🎨 Appearance',
-        'dark': '🌙 Dark',
-        'light': '☀️ Light',
-        'logo': '🖼️ Logo',
-        'fees': '💰 Fees & Taxes',
-        'service_fee_label': 'Service Fee',
-        'vat_label': 'VAT',
-        'payment_methods': '💳 Payment Methods',
-        'employees': '👥 Employees',
-        'switch_business': '🔄 Switch Business',
-        'edit_fees': 'Edit Fees',
-        'edit_logo': 'Edit Logo',
-        'no_logo': 'No Logo',
-        'remove_logo': 'Remove Logo',
-        'save_logo': 'Save Logo',
-        'upload_logo': 'Upload Logo Image',
-        'menu': '🍽️ Menu',
-        'manage_menu': '⚙️ Manage Menu',
-        'add_item': 'Add Item',
-        'add_category': 'Add Category',
-        'item_name': 'Item Name',
-        'item_price': 'Price',
-        'item_desc': 'Description',
-        'item_image': 'Item Image',
-        'category': 'Category',
-        'no_items': 'No items',
-        'no_categories': 'No categories',
-        'qr_code': '📱 Customer Order',
-        'qr_label': 'Tables QR Code',
-        'qr_sub': 'Scan to order directly from menu',
-        'show_qr': 'Show QR',
-        'download_qr': 'Download QR',
-        'scan_qr': 'Scan code to open customer menu',
-        'expense_desc': 'Description',
-        'expense_amount': 'Amount',
-        'add_expense_title': 'Add Expense',
-        'close_shift_title': 'Confirm Close Shift',
-        'shift_revenue': 'Revenue',
-        'shift_expenses': 'Expenses',
-        'shift_profit': 'Net Profit',
-        'confirm_close': 'Confirm Close',
-        'no_open_shift': 'No open shift',
-        'permissions': '🔐 Permissions',
-        'perm_dashboard': '👀 Dashboard',
-        'perm_tables': '🪑 Tables',
-        'perm_orders': '📋 Orders',
-        'perm_menu': '🍽️ Menu',
-        'perm_settings': '⚙️ Settings',
-        'perm_create_orders': '🛒 Create Orders',
-        'perm_add_expense': '💰 Add Expense',
-        'perm_close_shift': '🔒 Close Shift',
-        'perm_print_receipt': '🧾 Print Receipt',
-        'perm_manage_menu': '📝 Manage Menu',
-        'perm_view_revenue': '💰 View Revenue',
-        'perm_view_expenses': '📊 View Expenses',
-        'employee_name': 'Name',
-        'employee_pin': 'PIN (4 digits)',
-        'employee_role': 'Role',
-        'add_employee': 'Add Employee',
-        'edit_employee': 'Edit Employee',
-        'payment_method_name': 'Payment Method Name',
-        'payment_method_icon': 'Icon',
-        'add_payment_method': 'Add Payment Method',
-        'edit_payment_method': 'Edit Payment Method',
-        'cash': 'Cash',
-        'card': 'Card',
-        'wallet': 'Wallet',
-        'mobile_wallet': 'Mobile Wallet',
-        'bank_transfer': 'Bank Transfer',
-        'category_name': 'Category Name',
-        'category_icon': 'Icon',
-        'add_category_title': 'Add Category',
-        'order_created': '✅ Order created successfully!',
-        'order_updated': '✅ Order status updated',
-        'payment_success': '✅ Payment successful!',
-        'payment_failed': '❌ Payment failed',
-        'expense_added': '✅ Expense recorded',
-        'shift_closed': '✅ Shift closed',
-        'shift_close_failed': '❌ Failed to close shift',
-        'item_added': '✅ Item added',
-        'item_updated': '✅ Item updated',
-        'item_deleted': '✅ Item deleted',
-        'category_added': '✅ Category added',
-        'payment_method_added': '✅ Payment method added',
-        'employee_added': '✅ Employee added',
-        'employee_updated': '✅ Employee updated',
-        'employee_deleted': '✅ Employee deleted',
-        'logo_saved': '✅ Logo saved',
-        'logo_deleted': '✅ Logo deleted',
-        'fees_saved': '✅ Settings saved',
-        'error_general': '⚠️ An error occurred, please try again',
-        'error_connection': '⚠️ Connection error',
-        'error_invalid_code': '⚠️ Invalid business code',
-        'error_invalid_pin': '⚠️ Incorrect PIN',
-        'error_no_items': '⚠️ Add at least one item',
-        'error_no_tables': '⚠️ No tables available',
-        'error_permission': '⛔ You don\'t have permission',
-        'error_upload': '⚠️ Image upload failed',
-        'recent_orders': '📜 Recent Orders',
-        'order_details': 'Order Details',
-        'tables': '🪑 Tables',
-        'kitchen': '👨‍🍳 Orders',
-        'kitchen_orders': '📋 Active Orders',
-        'no_kitchen_orders': 'No active orders',
-        'items': 'items',
-        'more': 'more',
-        'ready_to_serve': '🛎️ Ready to Serve',
-        'dashboard': 'Dashboard',
-        'activate': 'Activate',
-        'qr_generated': '✅ QR Code generated',
-        'start_preparing': '🔪 Start Preparing',
-        'ready_for_delivery': '✅ Ready for Delivery',
-        'deliver': '🚚 Deliver',
-        'delivered': '✅ Delivered',
-        'chef_view': '👨‍🍳 Kitchen View',
-        'persons': 'persons',
-        'manage_tables': '🪑 Manage Tables',
-        'add_table': 'Add Table',
-        'edit_table': 'Edit Table',
-        'delete_table': 'Delete Table',
-        'no_tables': 'No tables',
-        'table_added': '✅ Table added',
-        'table_updated': '✅ Table updated',
-        'table_deleted': '✅ Table deleted',
-        'delete_table_confirm': 'Delete this table?',
-        'shift_history': '📋 Shift History',
-        'no_shift_history': 'No closed shifts',
-        'preparing_started': '🔪 Preparing...',
-        'order_ready_notification': '✅ Order ready! Notifying waiter',
-        'order_delivered': '✅ Order delivered to customer',
-        'table_number': 'Table Number',
-        'capacity': 'Capacity (persons)',
-        'status': 'Status',
-        'device_activated': '✅ Device activated successfully',
-        'item_added_to_order': '✅ {name} added',
-        'loading': 'Loading...',
-        'default_item': 'Item',
-        'no_open_shift': 'No open shift',
-        'orders': '📋 Orders',
-        'generate': 'Generate',
-        'shift_open': '✅ Shift Open',
-        'shift_closed': '🔴 Shift Closed',
-        'menu_categories': '📂 Categories'
+        // يمكن إضافة الترجمات الإنجليزية هنا
     }
 };
 
@@ -651,6 +460,7 @@ let orderStatus = {};
 let qrGenerated = false;
 let editingTableId = null;
 let realtimeSubscription = null;
+let shiftFilter = 'daily';
 
 // ============================================================
 // CUSTOMER PAGE STATE
@@ -692,14 +502,12 @@ function navigateTo(viewId) {
             'view-kitchen': 'orders',
             'view-menu': 'menu',
             'view-settings': 'settings',
-            'view-qr': 'dashboard'
+            'view-qr': 'dashboard',
+            'view-shift-history': 'dashboard',
+            'view-shift-detail': 'dashboard'
         };
         const permKey = viewMap[viewId];
-        if (permKey && !perms[permKey] && viewId !== 'view-qr') {
-            showToast(t('error_permission'), 'error');
-            return;
-        }
-        if (viewId === 'view-qr' && !perms.dashboard) {
+        if (permKey && !perms[permKey] && viewId !== 'view-qr' && viewId !== 'view-shift-history' && viewId !== 'view-shift-detail') {
             showToast(t('error_permission'), 'error');
             return;
         }
@@ -717,6 +525,7 @@ function navigateTo(viewId) {
     if (viewId === 'view-menu') { renderMenuView(); renderMenuManagement(); }
     if (viewId === 'view-settings') renderSettings();
     if (viewId === 'view-qr') generateQRCodePage();
+    if (viewId === 'view-shift-history') renderShiftHistoryPage(shiftFilter);
 }
 
 function getDeviceId() {
@@ -740,7 +549,31 @@ function escapeHtml(str) {
 }
 
 // ============================================================
-// RING NOTIFICATION SYSTEM
+// HAMBURGER MENU
+// ============================================================
+function toggleHamburgerMenu() {
+    const dropdown = document.getElementById('hamburgerDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+function closeHamburgerMenu() {
+    const dropdown = document.getElementById('hamburgerDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('show');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const menu = document.querySelector('.hamburger-menu');
+    if (menu && !menu.contains(e.target)) {
+        closeHamburgerMenu();
+    }
+});
+
+// ============================================================
+// RING NOTIFICATION
 // ============================================================
 let audioContext = null;
 let ringTimeout = null;
@@ -831,7 +664,7 @@ function showRingNotification(title, message, type = 'new_order') {
 }
 
 // ============================================================
-// PERMISSIONS HELPERS
+// PERMISSIONS
 // ============================================================
 function hasPermission(perm) {
     if (!currentUser) return false;
@@ -914,7 +747,7 @@ function updateShiftIndicator() {
 }
 
 // ============================================================
-// QR CODE — صفحة منفصلة
+// QR CODE
 // ============================================================
 function generateQRCodePage() {
     if (!business) {
@@ -940,7 +773,7 @@ function downloadQRPage() {
 }
 
 // ============================================================
-// REALTIME SYNC - التزامن اللحظي بين الأجهزة
+// REALTIME SYNC
 // ============================================================
 function startRealtimeSync() {
     if (!supabaseClient || !business) {
@@ -975,7 +808,6 @@ function startRealtimeSync() {
                     if (!orderStatus[newRecord.id]) {
                         orderStatus[newRecord.id] = newRecord.status || 'pending';
                     }
-                    // 🔔 إشعار الطلب الجديد يظهر للشيف والكاشير فقط (من خلال Realtime)
                     showRingNotification(
                         '🔔 طلب جديد!',
                         `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - ${newRecord.status || 'جديد'}`,
@@ -987,7 +819,6 @@ function startRealtimeSync() {
                         const newStatus = newRecord.status;
                         if (oldStatus !== newStatus) {
                             if (newStatus === 'ready') {
-                                // 🔔 إشعار جاهز للتسليم - يظهر للوايتر عبر Realtime
                                 showRingNotification(
                                     '🛎️ طلب جاهز للتسليم!',
                                     `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - انتظر الويتر`,
@@ -1133,7 +964,6 @@ async function loadCustomerData() {
         customerCategories = catsRes.data || [];
 
         await renderCustomerTables();
-
         renderCustomerCategories();
         renderCustomerItems();
         loadFeesSettings();
@@ -1365,7 +1195,6 @@ async function submitCustomerOrder() {
 
         await supabaseClient.from('order_items').insert(orderItems);
 
-        // إشعار الطلب الجديد سيتم بثه عبر Realtime لجميع الأجهزة
         customerCart = [];
         updateCustomerCartUI();
         closeSheet('customerCartOverlay');
@@ -1592,9 +1421,8 @@ async function enterMainApp() {
 }
 
 // ============================================================
-// SHIFT MANAGEMENT - شيفت واحد للمحل
+// SHIFT MANAGEMENT
 // ============================================================
-
 async function loadOrOpenShift() {
     if (!supabaseClient || !business) {
         console.warn('⚠️ Cannot load shift: missing client or business');
@@ -1845,47 +1673,201 @@ async function openCloseShiftSheet() {
     }
 }
 
-async function renderShiftHistory() {
-    const el = document.getElementById('settingsShiftHistory');
-    if (!el) return;
-
-    if (!supabaseClient) return;
+// ============================================================
+// SHIFT HISTORY - سجل الشيفتات (صفحة منفصلة)
+// ============================================================
+async function renderShiftHistoryPage(filter = 'daily') {
+    const container = document.getElementById('shiftHistoryListPage');
+    if (!container) return;
+    
+    if (!supabaseClient || !business) {
+        container.innerHTML = `<div class="empty">${t('loading')}</div>`;
+        return;
+    }
     
     try {
+        let startDate;
+        const now = new Date();
+        
+        if (filter === 'daily') {
+            startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0);
+        } else if (filter === 'weekly') {
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 7);
+        } else if (filter === 'monthly') {
+            startDate = new Date(now);
+            startDate.setMonth(now.getMonth() - 1);
+        }
+        
         const { data: shifts, error } = await supabaseClient
             .from('shifts')
             .select('*')
             .eq('business_id', business.id)
             .eq('status', 'closed')
-            .order('closed_at', { ascending: false })
-            .limit(20);
-
-        if (error) {
-            console.error('Error fetching shift history:', error);
-            el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ خطأ في تحميل سجل الشيفتات</div>`;
-            return;
-        }
-
+            .gte('closed_at', startDate.toISOString())
+            .order('closed_at', { ascending: false });
+        
+        if (error) throw error;
+        
         if (!shifts || shifts.length === 0) {
-            el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
+            container.innerHTML = `<div class="empty"><i class="fa-solid fa-clock"></i> لا توجد شيفتات ${filter === 'daily' ? 'اليوم' : filter === 'weekly' ? 'هذا الأسبوع' : 'هذا الشهر'}</div>`;
             return;
         }
-
-        el.innerHTML = shifts.map(shift =>
-            `<div class="list-row">
-                <div>
-                    <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
-                    <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.closed_by || 'نظام'}</div>
+        
+        container.innerHTML = shifts.map(shift => `
+            <div class="shift-card" onclick="viewShiftDetail('${shift.id}')">
+                <div class="shift-card-header">
+                    <div class="shift-card-date">${new Date(shift.closed_at).toLocaleDateString('ar-EG')}</div>
+                    <span class="badge badge-gold">${new Date(shift.closed_at).toLocaleTimeString('ar-EG')}</span>
                 </div>
-                <div>
-                    <div class="row-sub" style="color:var(--success);">💰 ${money(shift.total_revenue || 0)}</div>
-                    <div class="row-sub" style="color:var(--primary-dark);">📈 ${money(shift.total_profit || 0)}</div>
+                <div class="shift-card-stats">
+                    <span>💰 <span class="revenue">${money(shift.total_revenue || 0)}</span></span>
+                    <span>📈 ${money(shift.total_profit || 0)}</span>
+                    <span>👤 ${shift.closed_by || 'نظام'}</span>
                 </div>
-            </div>`
-        ).join('');
+            </div>
+        `).join('');
+        
     } catch (e) {
-        console.error('Error in renderShiftHistory:', e);
-        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
+        console.error('Error loading shift history:', e);
+        container.innerHTML = `<div class="empty">⚠️ حدث خطأ في تحميل السجل</div>`;
+    }
+}
+
+function filterShiftHistory(filter) {
+    shiftFilter = filter;
+    document.querySelectorAll('#shiftFilterTabs .btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    renderShiftHistoryPage(filter);
+}
+
+// ============================================================
+// SHIFT DETAIL - تفاصيل الشيفت
+// ============================================================
+async function viewShiftDetail(shiftId) {
+    if (!supabaseClient || !business) return;
+    
+    try {
+        // جلب بيانات الشيفت
+        const { data: shift, error: shiftError } = await supabaseClient
+            .from('shifts')
+            .select('*')
+            .eq('id', shiftId)
+            .single();
+        
+        if (shiftError) throw shiftError;
+        
+        // جلب الطلبات في هذا الشيفت
+        const { data: ordersData, error: ordersError } = await supabaseClient
+            .from('orders')
+            .select('*, order_items(*, menu_items(*))')
+            .eq('business_id', business.id)
+            .gte('created_at', shift.opened_at)
+            .lte('created_at', shift.closed_at || new Date().toISOString())
+            .order('created_at', { ascending: true });
+        
+        if (ordersError) throw ordersError;
+        
+        // عرض تفاصيل الشيفت
+        document.getElementById('shiftDetailDate').textContent = new Date(shift.closed_at).toLocaleDateString('ar-EG');
+        document.getElementById('shiftDetailMeta').textContent = 
+            `🕐 ${new Date(shift.opened_at).toLocaleTimeString('ar-EG')} - ${new Date(shift.closed_at).toLocaleTimeString('ar-EG')} · 👤 ${shift.closed_by || 'نظام'}`;
+        
+        document.getElementById('detailRevenue').textContent = money(shift.total_revenue || 0);
+        document.getElementById('detailOrders').textContent = ordersData?.length || 0;
+        
+        // حساب عدد الطاولات المستخدمة
+        const uniqueTables = new Set(ordersData?.map(o => o.table_id) || []);
+        document.getElementById('detailTables').textContent = uniqueTables.size || 0;
+        
+        // عرض الطلبات
+        const ordersContainer = document.getElementById('shiftDetailOrders');
+        
+        if (!ordersData || ordersData.length === 0) {
+            ordersContainer.innerHTML = `<div class="empty">لا توجد طلبات في هذا الشيفت</div>`;
+        } else {
+            // تجميع الطلبات حسب الطاولة
+            const tableOrders = {};
+            ordersData.forEach(order => {
+                if (!tableOrders[order.table_id]) {
+                    tableOrders[order.table_id] = [];
+                }
+                tableOrders[order.table_id].push(order);
+            });
+            
+            // جلب بيانات الطاولات
+            const tableIds = Object.keys(tableOrders);
+            const { data: tablesData } = await supabaseClient
+                .from('tables')
+                .select('*')
+                .in('id', tableIds);
+            
+            const tableMap = {};
+            (tablesData || []).forEach(t => { tableMap[t.id] = t; });
+            
+            // عرض الطاولات مع طلباتها
+            ordersContainer.innerHTML = Object.entries(tableOrders).map(([tableId, orders]) => {
+                const table = tableMap[tableId];
+                const tableNumber = table?.number || '?';
+                const totalForTable = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+                
+                // تجميع الطلبات حسب الوقت (كل ساعة)
+                const timeGroups = {};
+                orders.forEach(order => {
+                    const hour = new Date(order.created_at).getHours();
+                    const timeKey = `${hour}:00 - ${hour + 1}:00`;
+                    if (!timeGroups[timeKey]) {
+                        timeGroups[timeKey] = [];
+                    }
+                    timeGroups[timeKey].push(order);
+                });
+                
+                let timeHtml = '';
+                Object.entries(timeGroups).forEach(([timeKey, timeOrders]) => {
+                    const items = timeOrders.map(o => {
+                        const orderItems = o.order_items || [];
+                        return orderItems.map(item => 
+                            `${item.quantity}× ${item.menu_items?.name || 'صنف'}`
+                        ).join('، ');
+                    }).join(' | ');
+                    
+                    timeHtml += `
+                        <div style="background:var(--bg-input); border-radius:var(--radius-sm); padding:8px 12px; margin-bottom:6px;">
+                            <div style="display:flex; justify-content:space-between; font-size:13px;">
+                                <span style="font-weight:700;">🕐 ${timeKey}</span>
+                                <span style="color:var(--text-muted);">${timeOrders.length} طلبات</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                                ${items || 'لا توجد تفاصيل'}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                return `
+                    <div class="table-order-item">
+                        <div class="order-header">
+                            <div>
+                                <div class="order-table">🪑 طاولة ${tableNumber}</div>
+                                <div class="order-time">${orders.length} طلبات · ${money(totalForTable)}</div>
+                            </div>
+                            <div class="order-total">${money(totalForTable)}</div>
+                        </div>
+                        <div style="margin-top:8px;">
+                            ${timeHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        navigateTo('view-shift-detail');
+        
+    } catch (e) {
+        console.error('Error loading shift detail:', e);
+        showToast('⚠️ حدث خطأ في تحميل التفاصيل', 'error');
     }
 }
 
@@ -2198,7 +2180,7 @@ async function viewKitchenOrder(orderId) {
 }
 
 // ============================================================
-// ORDER WORKFLOW - المعدل: الشيف يرى فقط إشعار نصي
+// ORDER WORKFLOW
 // ============================================================
 async function startPreparing(orderId) {
     if (currentUser?.role !== 'chef' && currentUser?.type !== 'owner' && !hasPermission('orders')) {
@@ -2231,11 +2213,7 @@ async function markAsReady(orderId) {
         const order = Object.values(orders).find(o => o.id === orderId);
         const table = tables.find(t => t.id === order?.table_id);
         
-        // ✅ فقط إشعار نصي للشيف - بدون صوت أو تنبيه مرئي
         showToast(`✅ تم تجهيز طلب طاولة ${table?.number || '?'}`, 'success');
-        
-        // 🔔 الإشعار الصوتي والمرئي سيظهر للوايتر عبر Realtime
-        // (عند استلام تحديث status='ready' في دالة startRealtimeSync)
 
         await loadActiveOrders();
         renderKitchenOrders();
@@ -2249,7 +2227,7 @@ async function markAsReady(orderId) {
 }
 
 // ============================================================
-// TABLE SHEET - مختصرة للاختصار
+// TABLE SHEET
 // ============================================================
 function openTableSheet(tableId) {
     window._activeTableId = tableId;
@@ -2389,9 +2367,8 @@ function openTableSheet(tableId) {
 }
 
 // ============================================================
-// باقي الدوال الأساسية - مختصرة للاختصار
+// ORDER CREATION
 // ============================================================
-
 function addItemToOrder(item) {
     const existing = _orderItems.find(i => i.menu_item_id === item.id);
     if (existing) {
@@ -2692,17 +2669,14 @@ async function confirmPaymentAndClose(orderId) {
 }
 
 // ============================================================
-// MENU VIEW, MENU ITEM MANAGEMENT, CATEGORY MANAGEMENT
+// MENU MANAGEMENT
 // ============================================================
-
 function renderMenuView() {
     const el = document.getElementById('menuView');
-
     if (menuItems.length === 0) {
         el.innerHTML = `<div class="empty"><i class="fa-solid fa-utensils"></i>${t('no_items')}</div>`;
         return;
     }
-
     let html = '';
     if (menuCategories.length === 0) {
         menuItems.forEach(item => {
@@ -2771,7 +2745,6 @@ function openMenuItemSheet() {
         showToast(t('error_permission'), 'error');
         return;
     }
-
     document.getElementById('editMenuItemId').value = '';
     document.getElementById('menuItemName').value = '';
     document.getElementById('menuItemPrice').value = '';
@@ -2799,7 +2772,6 @@ function editMenuItem(itemId) {
         showToast(t('error_permission'), 'error');
         return;
     }
-
     const item = menuItems.find(i => i.id === itemId);
     if (!item) return;
     document.getElementById('editMenuItemId').value = item.id;
@@ -2974,9 +2946,8 @@ async function deleteCategory(categoryId) {
 }
 
 // ============================================================
-// EXPENSE, PAYMENT METHOD, EMPLOYEE MANAGEMENT
+// EXPENSE
 // ============================================================
-
 function openExpenseSheet() {
     if (!hasPermission('add_expense')) {
         showToast(t('error_permission'), 'error');
@@ -3010,6 +2981,9 @@ async function saveExpense() {
     } catch (e) { errEl.textContent = t('error_general'); }
 }
 
+// ============================================================
+// PAYMENT METHOD
+// ============================================================
 function openPaymentMethodSheet() {
     document.getElementById('editPaymentMethodId').value = '';
     document.getElementById('paymentMethodName').value = '';
@@ -3041,6 +3015,9 @@ async function savePaymentMethod() {
     } catch (e) { errEl.textContent = t('error_general'); }
 }
 
+// ============================================================
+// EMPLOYEE MANAGEMENT
+// ============================================================
 function openEmployeeSheet() {
     document.getElementById('editEmployeeId').value = '';
     document.getElementById('employeeName').value = '';
@@ -3058,60 +3035,24 @@ function openEmployeeSheet() {
 function setDefaultPermissions(role) {
     const defaults = {
         waiter: {
-            dashboard: false,
-            tables: true,
-            orders: false,
-            menu: false,
-            settings: false,
-            create_orders: true,
-            add_expense: false,
-            close_shift: false,
-            print_receipt: true,
-            manage_menu: false,
-            view_revenue: false,
-            view_expenses: false
+            dashboard: false, tables: true, orders: false, menu: false, settings: false,
+            create_orders: true, add_expense: false, close_shift: false, print_receipt: true,
+            manage_menu: false, view_revenue: false, view_expenses: false
         },
         chef: {
-            dashboard: false,
-            tables: false,
-            orders: true,
-            menu: false,
-            settings: false,
-            create_orders: false,
-            add_expense: false,
-            close_shift: false,
-            print_receipt: false,
-            manage_menu: false,
-            view_revenue: false,
-            view_expenses: false
+            dashboard: false, tables: false, orders: true, menu: false, settings: false,
+            create_orders: false, add_expense: false, close_shift: false, print_receipt: false,
+            manage_menu: false, view_revenue: false, view_expenses: false
         },
         cashier: {
-            dashboard: true,
-            tables: true,
-            orders: true,
-            menu: false,
-            settings: false,
-            create_orders: true,
-            add_expense: true,
-            close_shift: true,
-            print_receipt: true,
-            manage_menu: false,
-            view_revenue: true,
-            view_expenses: true
+            dashboard: true, tables: true, orders: true, menu: false, settings: false,
+            create_orders: true, add_expense: true, close_shift: true, print_receipt: true,
+            manage_menu: false, view_revenue: true, view_expenses: true
         },
         admin: {
-            dashboard: true,
-            tables: true,
-            orders: true,
-            menu: true,
-            settings: true,
-            create_orders: true,
-            add_expense: true,
-            close_shift: true,
-            print_receipt: true,
-            manage_menu: true,
-            view_revenue: true,
-            view_expenses: true
+            dashboard: true, tables: true, orders: true, menu: true, settings: true,
+            create_orders: true, add_expense: true, close_shift: true, print_receipt: true,
+            manage_menu: true, view_revenue: true, view_expenses: true
         }
     };
 
@@ -3346,6 +3287,57 @@ function renderSettingsEmployees() {
 }
 
 // ============================================================
+// SHIFT HISTORY (في الإعدادات)
+// ============================================================
+function renderShiftHistory() {
+    const el = document.getElementById('settingsShiftHistory');
+    if (!el) return;
+
+    if (!supabaseClient || !business) {
+        el.innerHTML = `<div class="empty" style="padding:12px;">${t('loading')}</div>`;
+        return;
+    }
+
+    try {
+        supabaseClient
+            .from('shifts')
+            .select('*')
+            .eq('business_id', business.id)
+            .eq('status', 'closed')
+            .order('closed_at', { ascending: false })
+            .limit(5)
+            .then(({ data: shifts, error }) => {
+                if (error) {
+                    console.error('Error fetching shift history:', error);
+                    el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل سجل الشيفتات</div>`;
+                    return;
+                }
+
+                if (!shifts || shifts.length === 0) {
+                    el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
+                    return;
+                }
+
+                el.innerHTML = shifts.map(shift => `
+                    <div class="list-row">
+                        <div>
+                            <div class="row-title">${new Date(shift.closed_at).toLocaleDateString('ar-EG')}</div>
+                            <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString('ar-EG')} · ${shift.closed_by || 'نظام'}</div>
+                        </div>
+                        <div>
+                            <div class="row-sub" style="color:var(--success);">💰 ${money(shift.total_revenue || 0)}</div>
+                            <div class="row-sub" style="color:var(--primary-dark);">📈 ${money(shift.total_profit || 0)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            });
+    } catch (e) {
+        console.error('Error in renderShiftHistory:', e);
+        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
+    }
+}
+
+// ============================================================
 // TABLE MANAGEMENT
 // ============================================================
 function openTableManagementSheet() {
@@ -3479,8 +3471,10 @@ async function tryAutoResume() {
     }
 }
 
-console.log('🍽️ Plate Pro — Full System with Realtime Sync!');
+console.log('🍽️ Plate Pro — Full System with Realtime Sync & Advanced Shift History!');
 console.log('✅ Real-time synchronization between devices');
+console.log('✅ Advanced shift history with daily/weekly/monthly views');
+console.log('✅ Detailed shift view with table and time analysis');
 console.log('✅ One shift for the entire restaurant');
 console.log('✅ Granular permissions per role');
 console.log('✅ Notifications only for waiters when order is ready');
