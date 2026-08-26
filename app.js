@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (نسخة مع Realtime Sync)
+// app.js - كامل منطق التطبيق (نسخة مع Realtime Sync والإشعارات الصحيحة)
 // ============================================================
 
 // ============================================================
@@ -650,7 +650,7 @@ let selectedPaymentMethod = null;
 let orderStatus = {};
 let qrGenerated = false;
 let editingTableId = null;
-let realtimeSubscription = null; // للإشتراك في التزامن اللحظي
+let realtimeSubscription = null;
 
 // ============================================================
 // CUSTOMER PAGE STATE
@@ -975,6 +975,7 @@ function startRealtimeSync() {
                     if (!orderStatus[newRecord.id]) {
                         orderStatus[newRecord.id] = newRecord.status || 'pending';
                     }
+                    // 🔔 إشعار الطلب الجديد يظهر للشيف والكاشير فقط (من خلال Realtime)
                     showRingNotification(
                         '🔔 طلب جديد!',
                         `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - ${newRecord.status || 'جديد'}`,
@@ -986,9 +987,10 @@ function startRealtimeSync() {
                         const newStatus = newRecord.status;
                         if (oldStatus !== newStatus) {
                             if (newStatus === 'ready') {
+                                // 🔔 إشعار جاهز للتسليم - يظهر للوايتر عبر Realtime
                                 showRingNotification(
-                                    '🔔 طلب جاهز!',
-                                    `طاولة ${newRecord.table_id?.slice(0, 8) || '?'}`,
+                                    '🛎️ طلب جاهز للتسليم!',
+                                    `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - انتظر الويتر`,
                                     'order_ready'
                                 );
                             }
@@ -1363,12 +1365,7 @@ async function submitCustomerOrder() {
 
         await supabaseClient.from('order_items').insert(orderItems);
 
-        showRingNotification(
-            '🔔 طلب جديد من العميل!',
-            `طاولة رقم ${tableData.number} - ${customerCart.length} أصناف`,
-            'new_order'
-        );
-
+        // إشعار الطلب الجديد سيتم بثه عبر Realtime لجميع الأجهزة
         customerCart = [];
         updateCustomerCartUI();
         closeSheet('customerCartOverlay');
@@ -2200,6 +2197,9 @@ async function viewKitchenOrder(orderId) {
     openSheet('kitchenOrderOverlay');
 }
 
+// ============================================================
+// ORDER WORKFLOW - المعدل: الشيف يرى فقط إشعار نصي
+// ============================================================
 async function startPreparing(orderId) {
     if (currentUser?.role !== 'chef' && currentUser?.type !== 'owner' && !hasPermission('orders')) {
         showToast(t('error_permission'), 'error');
@@ -2230,13 +2230,13 @@ async function markAsReady(orderId) {
 
         const order = Object.values(orders).find(o => o.id === orderId);
         const table = tables.find(t => t.id === order?.table_id);
-        showRingNotification(
-            '🔔 طلب جاهز للتسليم!',
-            `طاولة رقم ${table?.number || '?'} - جاهز للويتر`,
-            'order_ready'
-        );
+        
+        // ✅ فقط إشعار نصي للشيف - بدون صوت أو تنبيه مرئي
+        showToast(`✅ تم تجهيز طلب طاولة ${table?.number || '?'}`, 'success');
+        
+        // 🔔 الإشعار الصوتي والمرئي سيظهر للوايتر عبر Realtime
+        // (عند استلام تحديث status='ready' في دالة startRealtimeSync)
 
-        showToast(t('order_ready_notification'), 'success');
         await loadActiveOrders();
         renderKitchenOrders();
         renderTables();
@@ -3483,5 +3483,6 @@ console.log('🍽️ Plate Pro — Full System with Realtime Sync!');
 console.log('✅ Real-time synchronization between devices');
 console.log('✅ One shift for the entire restaurant');
 console.log('✅ Granular permissions per role');
+console.log('✅ Notifications only for waiters when order is ready');
 console.log('✅ Kitchen orders for chef');
 console.log('✅ Ring notifications for new & ready orders');
