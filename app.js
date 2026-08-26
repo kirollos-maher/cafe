@@ -1,5 +1,5 @@
 // ============================================================
-// app.js - كامل منطق التطبيق (النسخة المتطورة)
+// app.js - كامل منطق التطبيق (النسخة النهائية المعدلة)
 // ============================================================
 
 // ============================================================
@@ -498,7 +498,7 @@ function openFeesSettings() {
 }
 
 // ============================================================
-// LOGO & THEME FROM LOGO - النسخة المتطورة
+// LOGO & THEME FROM LOGO
 // ============================================================
 function loadLogo() {
     const saved = localStorage.getItem('platepro_logo');
@@ -574,7 +574,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // تطبيق ألوان الشعار على كل العناصر
 function applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold) {
-    // تطبيق على الجذور
     document.documentElement.setAttribute('data-logo-theme', 'true');
     document.documentElement.style.setProperty('--logo-primary', primary);
     document.documentElement.style.setProperty('--logo-primary-dark', primaryDark);
@@ -582,47 +581,38 @@ function applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowG
     document.documentElement.style.setProperty('--logo-primary-glow', primaryGlow);
     document.documentElement.style.setProperty('--logo-shadow-gold', shadowGold);
     
-    // تحديث الخلفية العامة
     document.body.style.background = `linear-gradient(135deg, ${primaryLight}22, var(--bg))`;
     
-    // تحديث الهيدر
     const header = document.querySelector('.app-header');
     if (header) header.style.borderBottom = `2px solid ${primary}`;
     
-    // تحديث بطاقات الإيراد
     document.querySelectorAll('.stat-card.revenue').forEach(el => {
         el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
     });
     
-    // تحديث الأزرار الرئيسية
     document.querySelectorAll('.btn-primary').forEach(el => {
         el.style.background = primary;
         el.style.boxShadow = shadowGold;
     });
     
-    // تحديث البادجات الذهبية
     document.querySelectorAll('.badge-gold').forEach(el => {
         el.style.background = primary;
         el.style.borderColor = primaryDark;
     });
     
-    // تحديث هيدر العميل
     document.querySelectorAll('.customer-hero').forEach(el => {
         el.style.background = `linear-gradient(145deg, ${primary}, ${primaryDark})`;
     });
     
-    // تحديث أزرار التنقل النشطة
     document.querySelectorAll('.nav-btn.active').forEach(el => {
         el.style.color = primary;
     });
     
-    // تحديث مؤشر الشيفت المفتوح
     document.querySelectorAll('.shift-indicator').forEach(el => {
         el.style.borderColor = primary;
         el.style.color = primary;
     });
     
-    // تحديث بطاقات الطاولات المشغولة
     document.querySelectorAll('.table-card.occupied').forEach(el => {
         el.style.borderColor = primary;
         el.style.background = `linear-gradient(145deg, ${primaryLight}44, var(--bg-card))`;
@@ -663,7 +653,6 @@ function saveLogo() {
 }
 
 function removeLogoTheme() {
-    // إزالة الثيم من الجذور
     document.documentElement.removeAttribute('data-logo-theme');
     document.documentElement.style.removeProperty('--logo-primary');
     document.documentElement.style.removeProperty('--logo-primary-dark');
@@ -671,7 +660,6 @@ function removeLogoTheme() {
     document.documentElement.style.removeProperty('--logo-primary-glow');
     document.documentElement.style.removeProperty('--logo-shadow-gold');
     
-    // إعادة الخلفية والألوان للوضع الافتراضي
     document.body.style.background = '';
     
     const header = document.querySelector('.app-header');
@@ -727,7 +715,6 @@ function removeLogo() {
     renderSettings();
 }
 
-// استخراج الألوان من الشعار
 function extractThemeFromLogo(imageData) {
     try {
         const img = new Image();
@@ -780,7 +767,6 @@ function extractThemeFromLogo(imageData) {
                 const primaryGlow = `rgba(${primaryR},${primaryG},${primaryB},0.2)`;
                 const shadowGold = `0 4px 24px rgba(${primaryR},${primaryG},${primaryB},0.35)`;
 
-                // تطبيق الألوان على كل العناصر
                 applyLogoTheme(primary, primaryDark, primaryLight, primaryGlow, shadowGold);
 
                 console.log('🎨 Theme extracted from logo:', { primary, primaryDark, primaryLight });
@@ -1659,46 +1645,124 @@ async function enterMainApp() {
 // SHIFT لكل موظف
 // ============================================================
 async function loadOrOpenEmployeeShift() {
-    if (!supabaseClient || !business || !currentUser) return;
+    if (!supabaseClient || !business || !currentUser) {
+        console.warn('⚠️ Cannot load shift: missing client, business, or user');
+        return null;
+    }
 
     const employeeId = currentUser.id;
     const employeeName = currentUser.name || 'موظف';
 
-    let { data: shift } = await supabaseClient
-        .from('shifts')
-        .select('*')
-        .eq('business_id', business.id)
-        .eq('employee_id', employeeId)
-        .eq('status', 'open')
-        .maybeSingle();
-
-    if (!shift) {
-        const { data: newShift, error } = await supabaseClient
-            .from('shifts')
-            .insert({
-                business_id: business.id,
-                employee_id: employeeId,
-                employee_name: employeeName,
-                opened_at: new Date().toISOString(),
-                status: 'open',
-                total_revenue: 0,
-                total_expenses: 0,
-                total_profit: 0
-            })
-            .select()
-            .single();
-
-        if (!error && newShift) {
-            shift = newShift;
-            console.log(`🔄 Shift opened for employee: ${employeeName}`);
-        } else {
-            console.error('Error creating shift:', error);
-        }
+    if (!employeeId) {
+        console.warn('⚠️ Employee ID is null, cannot load shift');
+        return null;
     }
 
-    currentShift = shift;
-    updateShiftIndicator();
-    return shift;
+    try {
+        let { data: shift, error } = await supabaseClient
+            .from('shifts')
+            .select('*')
+            .eq('business_id', business.id)
+            .eq('employee_id', employeeId)
+            .eq('status', 'open')
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error fetching shift:', error);
+            // إذا كان الجدول لا يحتوي على عمود employee_id، نحاول بدون تصفية
+            let { data: fallbackShift, error: fallbackError } = await supabaseClient
+                .from('shifts')
+                .select('*')
+                .eq('business_id', business.id)
+                .eq('status', 'open')
+                .maybeSingle();
+
+            if (!fallbackError && fallbackShift) {
+                shift = fallbackShift;
+                // تحديث الشيفت ليرتبط بالموظف الحالي
+                await supabaseClient
+                    .from('shifts')
+                    .update({ employee_id: employeeId, employee_name: employeeName })
+                    .eq('id', fallbackShift.id);
+            }
+        }
+
+        if (!shift) {
+            // إنشاء شيفت جديد للموظف
+            const { data: newShift, error: createError } = await supabaseClient
+                .from('shifts')
+                .insert({
+                    business_id: business.id,
+                    employee_id: employeeId,
+                    employee_name: employeeName,
+                    opened_at: new Date().toISOString(),
+                    status: 'open',
+                    total_revenue: 0,
+                    total_expenses: 0,
+                    total_profit: 0
+                })
+                .select()
+                .single();
+
+            if (!createError && newShift) {
+                shift = newShift;
+                console.log(`🔄 Shift opened for employee: ${employeeName}`);
+            } else {
+                console.error('Error creating shift:', createError);
+                // محاولة إنشاء شيفت بدون employee_id (للتوافق مع الجداول القديمة)
+                const { data: basicShift, error: basicError } = await supabaseClient
+                    .from('shifts')
+                    .insert({
+                        business_id: business.id,
+                        employee_name: employeeName,
+                        opened_at: new Date().toISOString(),
+                        status: 'open',
+                        total_revenue: 0,
+                        total_expenses: 0,
+                        total_profit: 0
+                    })
+                    .select()
+                    .single();
+
+                if (!basicError && basicShift) {
+                    shift = basicShift;
+                    console.log(`🔄 Basic shift opened for employee: ${employeeName}`);
+                }
+            }
+        }
+
+        currentShift = shift;
+        updateShiftIndicator();
+        return shift;
+
+    } catch (e) {
+        console.error('Error in loadOrOpenEmployeeShift:', e);
+        // محاولة إنشاء شيفت بسيط بدون employee_id
+        try {
+            const { data: basicShift, error: basicError } = await supabaseClient
+                .from('shifts')
+                .insert({
+                    business_id: business.id,
+                    employee_name: currentUser?.name || 'موظف',
+                    opened_at: new Date().toISOString(),
+                    status: 'open',
+                    total_revenue: 0,
+                    total_expenses: 0,
+                    total_profit: 0
+                })
+                .select()
+                .single();
+
+            if (!basicError && basicShift) {
+                currentShift = basicShift;
+                updateShiftIndicator();
+                return basicShift;
+            }
+        } catch (e2) {
+            console.error('Failed to create basic shift:', e2);
+        }
+        return null;
+    }
 }
 
 async function closeEmployeeShift() {
@@ -3019,38 +3083,50 @@ async function openCloseShiftSheet() {
 }
 
 // ============================================================
-// SHIFT HISTORY — عرض شيفتات الموظفين
+// SHIFT HISTORY — عرض شيفتات الموظفين (معدل)
 // ============================================================
 async function renderShiftHistory() {
     const el = document.getElementById('settingsShiftHistory');
     if (!el) return;
 
     if (!supabaseClient) return;
-    const { data: shifts } = await supabaseClient
-        .from('shifts')
-        .select('*')
-        .eq('business_id', business.id)
-        .eq('status', 'closed')
-        .order('closed_at', { ascending: false })
-        .limit(20);
+    
+    try {
+        const { data: shifts, error } = await supabaseClient
+            .from('shifts')
+            .select('*')
+            .eq('business_id', business.id)
+            .eq('status', 'closed')
+            .order('closed_at', { ascending: false })
+            .limit(20);
 
-    if (!shifts || shifts.length === 0) {
-        el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
-        return;
+        if (error) {
+            console.error('Error fetching shift history:', error);
+            el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ خطأ في تحميل سجل الشيفتات</div>`;
+            return;
+        }
+
+        if (!shifts || shifts.length === 0) {
+            el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_shift_history')}</div>`;
+            return;
+        }
+
+        el.innerHTML = shifts.map(shift =>
+            `<div class="list-row">
+                                <div>
+                                    <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
+                                    <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.employee_name || shift.closed_by || 'موظف'}</div>
+                                </div>
+                                <div>
+                                    <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
+                                    <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
+                                </div>
+                            </div>`
+        ).join('');
+    } catch (e) {
+        console.error('Error in renderShiftHistory:', e);
+        el.innerHTML = `<div class="empty" style="padding:12px;">⚠️ حدث خطأ في تحميل السجل</div>`;
     }
-
-    el.innerHTML = shifts.map(shift =>
-        `<div class="list-row">
-                            <div>
-                                <div class="row-title">${new Date(shift.closed_at).toLocaleDateString()}</div>
-                                <div class="row-sub">${new Date(shift.closed_at).toLocaleTimeString()} · ${shift.employee_name || 'موظف'}</div>
-                            </div>
-                            <div>
-                                <div class="row-sub">${t('shift_revenue')}: ${money(shift.total_revenue || 0)}</div>
-                                <div class="row-sub">${t('shift_profit')}: ${money(shift.total_profit || 0)}</div>
-                            </div>
-                        </div>`
-    ).join('');
 }
 
 // ============================================================
