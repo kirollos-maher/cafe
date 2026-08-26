@@ -75,7 +75,7 @@
 }
 
 /* ============================================================
-   THEME FROM LOGO — يتم تطبيقه ديناميكياً
+   THEME FROM LOGO
    ============================================================ */
 [data-logo-theme="true"] {
     --primary: var(--logo-primary, #E8B84B);
@@ -110,8 +110,6 @@
 .badge-ready-table { background: #22C55E; color: #FFFFFF !important; border-color: #16A34A; }
 .badge-paid { background: #8B5CF6; color: #FFFFFF !important; border-color: #7C3AED; }
 .badge-cancelled { background: #6B7280; color: #FFFFFF !important; border-color: #4B5563; }
-.badge-shift-open { background: #22C55E; color: #FFFFFF !important; border-color: #16A34A; }
-.badge-shift-closed { background: #6B7280; color: #FFFFFF !important; border-color: #4B5563; }
 
 /* ============================================================
    THEME TOGGLE
@@ -381,20 +379,6 @@ body {
     font-family: var(--mono);
     transition: color 0.3s var(--ease);
 }
-.app-header .shift-badge {
-    font-size: 9px;
-    padding: 2px 10px;
-    border-radius: 12px;
-    background: var(--success-bg);
-    color: var(--success);
-    font-weight: 600;
-    border: 1px solid var(--success);
-}
-.app-header .shift-badge.closed {
-    background: var(--danger-bg);
-    color: var(--danger);
-    border-color: var(--danger);
-}
 
 .header-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 
@@ -424,6 +408,83 @@ body {
 @keyframes pulseLive {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
+}
+
+/* ============================================================
+   HAMBURGER MENU - القائمة المنسدلة
+   ============================================================ */
+.hamburger-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s var(--ease);
+}
+
+.hamburger-btn:hover {
+    background: var(--bg-input);
+}
+
+.hamburger-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    padding: 8px 0;
+    z-index: 100;
+    margin-top: 4px;
+}
+
+.hamburger-dropdown.show {
+    display: block;
+    animation: fadeIn 0.2s var(--ease);
+}
+
+.hamburger-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s var(--ease);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: right;
+}
+
+.hamburger-dropdown .dropdown-item:hover {
+    background: var(--bg-hover);
+}
+
+.hamburger-dropdown .dropdown-item i {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.hamburger-dropdown .dropdown-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 4px 12px;
 }
 
 /* ============================================================
@@ -482,11 +543,6 @@ body {
 .stat-card.revenue .brand-sub {
     font-size: 12px;
     opacity: 0.8;
-}
-.stat-card.revenue .stat-label {
-    font-size: 13px;
-    opacity: 0.9;
-    font-weight: 600;
 }
 .stat-card.revenue .stat-value {
     font-size: 38px;
@@ -785,6 +841,181 @@ body {
     gap: 10px;
     justify-content: center;
     flex-wrap: wrap;
+}
+
+/* ============================================================
+   SHIFT DETAILS PAGE - صفحة تفاصيل الشيفت
+   ============================================================ */
+.shift-detail-page {
+    padding: 16px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.shift-detail-page .back-btn {
+    margin-bottom: 16px;
+}
+
+.shift-detail-page .shift-header {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 16px;
+}
+
+.shift-detail-page .shift-header .shift-date {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.shift-detail-page .shift-header .shift-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.shift-detail-page .shift-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.shift-detail-page .shift-stats .stat-box {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+}
+
+.shift-detail-page .shift-stats .stat-box .stat-number {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.shift-detail-page .shift-stats .stat-box .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.shift-detail-page .table-order-item {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+}
+
+.shift-detail-page .table-order-item:hover {
+    border-color: var(--primary);
+    transform: translateX(-4px);
+}
+
+.shift-detail-page .table-order-item .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shift-detail-page .table-order-item .order-table {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.shift-detail-page .table-order-item .order-time {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.shift-detail-page .table-order-item .order-items-preview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.shift-detail-page .table-order-item .order-total {
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 15px;
+}
+
+/* ============================================================
+   SHIFT HISTORY PAGE - صفحة سجل الشيفتات
+   ============================================================ */
+.shift-history-page {
+    padding: 16px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.shift-history-page .filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.shift-history-page .filter-tabs .btn {
+    flex-shrink: 0;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+.shift-history-page .filter-tabs .btn.active {
+    background: var(--primary);
+    color: var(--text-primary);
+}
+
+.shift-history-page .shift-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+}
+
+.shift-history-page .shift-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.shift-history-page .shift-card .shift-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shift-history-page .shift-card .shift-card-date {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.shift-history-page .shift-card .shift-card-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.shift-history-page .shift-card .shift-card-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.shift-history-page .shift-card .shift-card-stats .revenue {
+    color: var(--success);
 }
 
 /* ============================================================
@@ -1193,4 +1424,7 @@ body {
     .app-header .biz-name { font-size: 14px; }
     .customer-menu-card .item-image { width: 50px; height: 50px; font-size: 22px; }
     .customer-hero h1 { font-size: 22px; }
+    .shift-detail-page .shift-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
