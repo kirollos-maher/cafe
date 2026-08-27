@@ -94,7 +94,7 @@
                 <div class="biz-sub mono" id="headerBizCode">—</div>
             </div>
             <div class="header-actions">
-                <span class="shift-indicator" id="shiftIndicator"><span class="shift-dot"></span> <span id="shiftStatusLabel">شيفت مفتوح</span></span>
+                <span class="shift-indicator" id="shiftIndicator"><span class="shift-dot"></span> <span id="shiftStatusLabel" data-i18n="shift_open">✅ شيفت مفتوح</span></span>
                 <button class="btn btn-ghost btn-sm" onclick="toggleLanguage()" style="padding:4px 10px;font-size:12px;"><i class="fa-solid fa-language"></i> <span id="langToggleLabel">English</span></button>
                 <div class="icon-btn"><span class="live-dot"></span></div>
                 
@@ -105,14 +105,14 @@
                     </button>
                     <div class="hamburger-dropdown" id="hamburgerDropdown">
                         <button class="dropdown-item" onclick="navigateTo('view-qr'); closeHamburgerMenu();">
-                            <i class="fa-solid fa-qrcode"></i> QR Code
+                            <i class="fa-solid fa-qrcode"></i> <span data-i18n="qr_label">QR Code</span>
                         </button>
                         <button class="dropdown-item" onclick="navigateTo('view-shift-history'); closeHamburgerMenu();">
-                            <i class="fa-solid fa-clock-rotate-left"></i> سجل الشيفتات
+                            <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="shift_history">سجل الشيفتات</span>
                         </button>
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-item" onclick="navigateTo('view-settings'); closeHamburgerMenu();">
-                            <i class="fa-solid fa-sliders"></i> الإعدادات
+                            <i class="fa-solid fa-sliders"></i> <span data-i18n="settings">الإعدادات</span>
                         </button>
                     </div>
                 </div>
@@ -143,6 +143,10 @@
                     <div class="stat-label" data-i18n="available_tables">🟢 طاولات متاحة</div>
                     <div class="stat-value mono" id="dashAvailableTables">0</div>
                 </div>
+                <div class="stat-card expenses-card" id="dashExpensesCard">
+                    <div class="stat-label" data-i18n="today_expenses">💸 مصروفات اليوم</div>
+                    <div class="stat-value mono" id="dashExpenses">0</div>
+                </div>
             </div>
 
             <div class="section-title" data-i18n="quick_actions">⚡ إجراءات سريعة</div>
@@ -150,6 +154,9 @@
                 <button class="btn btn-primary btn-block" onclick="openExpenseSheet()" id="dashExpenseBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="add_expense">إضافة مصروف</span></button>
                 <button class="btn btn-danger btn-block" onclick="openCloseShiftSheet()" id="dashCloseShiftBtn"><i class="fa-solid fa-lock"></i> <span data-i18n="close_shift">إقفال الشيفت</span></button>
             </div>
+
+            <div class="section-title" data-i18n="shift_expenses">📋 مصروفات الشيفت</div>
+            <div class="panel dash-expenses-list" id="dashExpensesList"></div>
         </div>
 
         <!-- TABLES -->
@@ -212,7 +219,7 @@
                 <div id="shiftHistoryListPage"></div>
                 
                 <button class="btn btn-ghost btn-block" style="margin-top:16px;" onclick="navigateTo('view-dashboard')">
-                    <i class="fa-solid fa-arrow-right"></i> رجوع للرئيسية
+                    <i class="fa-solid fa-arrow-right"></i> <span data-i18n="back">رجوع للرئيسية</span>
                 </button>
             </div>
         </div>
@@ -221,7 +228,7 @@
         <div class="view" id="view-shift-detail">
             <div class="shift-detail-page">
                 <button class="btn btn-ghost btn-sm back-btn" onclick="navigateTo('view-shift-history')">
-                    <i class="fa-solid fa-arrow-right"></i> رجوع
+                    <i class="fa-solid fa-arrow-right"></i> <span data-i18n="back">رجوع</span>
                 </button>
                 
                 <div class="shift-header" id="shiftDetailHeader">
