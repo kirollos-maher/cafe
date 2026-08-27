@@ -43,6 +43,7 @@ const translations = {
         'quick_actions': '⚡ إجراءات سريعة',
         'add_expense': 'إضافة مصروف',
         'close_shift': 'إقفال الشيفت',
+        'open_new_shift': 'فتح شيفت جديد',
         'scan_order': '📱 امسح واطلب من مكانك',
         'all': '🍽️ الكل',
         'cart': '🛒 سلة الطلبات',
@@ -239,6 +240,7 @@ const translations = {
         'quick_actions': '⚡ Quick Actions',
         'add_expense': 'Add Expense',
         'close_shift': 'Close Shift',
+        'open_new_shift': 'Open New Shift',
         'scan_order': '📱 Scan & Order from your table',
         'all': '🍽️ All',
         'cart': '🛒 Cart',
@@ -652,6 +654,7 @@ let menuCategories = [];
 let employees = [];
 let paymentMethods = [];
 let currentShift = null;
+let shiftManuallyClosed = false;
 let _orderItems = [];
 let selectedPaymentMethod = null;
 let orderStatus = {};
@@ -957,24 +960,49 @@ function updateUIByPermissions() {
     }
 }
 
+async function openNewShift() {
+    shiftManuallyClosed = false;
+    await loadOrOpenShift();
+    updateShiftIndicator();
+    renderDashboard();
+    renderSettings();
+    if (currentShift && !currentShift.id.toString().startsWith('temp_')) {
+        showToast('✅ تم فتح شيفت جديد', 'success');
+    }
+}
+
 // ============================================================
 // SHIFT INDICATOR
 // ============================================================
 function updateShiftIndicator() {
     const indicator = document.getElementById('shiftIndicator');
     const label = document.getElementById('shiftStatusLabel');
-    if (!indicator) return;
+    const closeShiftBtn = document.getElementById('dashCloseShiftBtn');
 
     if (currentShift && currentShift.status === 'open') {
-        indicator.className = 'shift-indicator';
-        label.textContent = t('shift_open');
-        label.style.color = 'var(--success)';
-        const time = new Date(currentShift.opened_at).toLocaleTimeString();
-        indicator.title = `فتح في: ${time}`;
+        if (indicator) {
+            indicator.className = 'shift-indicator';
+            label.textContent = t('shift_open');
+            label.style.color = 'var(--success)';
+            const time = new Date(currentShift.opened_at).toLocaleTimeString();
+            indicator.title = `فتح في: ${time}`;
+        }
+        if (closeShiftBtn) {
+            closeShiftBtn.className = 'btn btn-danger btn-block';
+            closeShiftBtn.innerHTML = `<i class="fa-solid fa-lock"></i> <span data-i18n="close_shift">${t('close_shift')}</span>`;
+            closeShiftBtn.onclick = openCloseShiftSheet;
+        }
     } else {
-        indicator.className = 'shift-indicator closed';
-        label.textContent = t('shift_closed');
-        label.style.color = 'var(--danger)';
+        if (indicator) {
+            indicator.className = 'shift-indicator closed';
+            label.textContent = t('shift_closed');
+            label.style.color = 'var(--danger)';
+        }
+        if (closeShiftBtn) {
+            closeShiftBtn.className = 'btn btn-primary btn-block';
+            closeShiftBtn.innerHTML = `<i class="fa-solid fa-unlock"></i> <span data-i18n="open_new_shift">${t('open_new_shift')}</span>`;
+            closeShiftBtn.onclick = openNewShift;
+        }
     }
 }
 
@@ -1648,7 +1676,7 @@ async function enterMainApp() {
     updateShiftIndicator();
 
     setInterval(async () => {
-        if (!currentShift || currentShift.status !== 'open') {
+        if (!shiftManuallyClosed && (!currentShift || currentShift.status !== 'open')) {
             await loadOrOpenShift();
         }
         updateShiftIndicator();
@@ -1680,7 +1708,6 @@ async function loadOrOpenShift() {
 
         if (!shift) {
             console.log('🔄 No open shift found, creating new one...');
-            
             try {
                 const { data: newShift, error: createError } = await supabaseClient
                     .from('shifts')
@@ -1712,6 +1739,7 @@ async function loadOrOpenShift() {
 
         if (shift) {
             currentShift = shift;
+            shiftManuallyClosed = false;
             updateShiftIndicator();
             return shift;
         } else {
@@ -1761,6 +1789,7 @@ async function closeShift() {
     if (currentShift.id && currentShift.id.toString().startsWith('temp_')) {
         showToast('⚠️ هذا شيفت مؤقت، سيتم إنشاء شيفت جديد تلقائياً', 'warning');
         currentShift = null;
+        shiftManuallyClosed = true;
         updateShiftIndicator();
         return { revenue: 0, totalExpenses: 0, profit: 0 };
     }
@@ -1804,6 +1833,7 @@ async function closeShift() {
 
         showToast(`✅ تم إقفال الشيفت - الإيراد: ${money(revenue)}`, 'success');
         currentShift = null;
+        shiftManuallyClosed = true;
         updateShiftIndicator();
         renderDashboard();
         renderSettings();
@@ -1890,11 +1920,9 @@ async function openCloseShiftSheet() {
             try {
                 await closeShift();
                 closeSheet('closeShiftOverlay');
-                setTimeout(async () => {
-                    await loadOrOpenShift();
-                    renderDashboard();
-                    renderSettings();
-                }, 500);
+                renderDashboard();
+                renderSettings();
+                updateShiftIndicator();
             } catch (e) {
                 showToast(t('shift_close_failed'), 'error');
             } finally {
