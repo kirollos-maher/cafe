@@ -112,6 +112,8 @@ const translations = {
         'close_shift_title': 'تأكيد إقفال الشيفت',
         'shift_revenue': 'الإيراد',
         'shift_expenses': 'المصروفات',
+        'today_expenses': '💸 مصروفات اليوم',
+        'no_expenses': 'لا يوجد مصروفات في هذا الشيفت',
         'shift_profit': 'الصافي',
         'confirm_close': 'تأكيد الإقفال',
         'no_open_shift': 'لا يوجد شيفت مفتوح',
@@ -306,6 +308,8 @@ const translations = {
         'close_shift_title': 'Confirm Close Shift',
         'shift_revenue': 'Revenue',
         'shift_expenses': 'Expenses',
+        'today_expenses': '💸 Today\'s Expenses',
+        'no_expenses': 'No expenses recorded this shift',
         'shift_profit': 'Net Profit',
         'confirm_close': 'Confirm Close',
         'no_open_shift': 'No open shift',
@@ -747,9 +751,41 @@ function escapeHtml(str) {
 // ============================================================
 function toggleHamburgerMenu() {
     const dropdown = document.getElementById('hamburgerDropdown');
-    if (dropdown) {
-        dropdown.classList.toggle('show');
+    if (!dropdown) return;
+
+    const isOpen = dropdown.classList.contains('show');
+    if (isOpen) {
+        closeHamburgerMenu();
+        return;
     }
+
+    // نحسب مكان الزر على الشاشة الفعلية ونمنع القائمة من الخروج برا حدود الشاشة
+    const btn = document.querySelector('.hamburger-btn');
+    if (btn) {
+        const rect = btn.getBoundingClientRect();
+        const margin = 10;
+        const dropdownWidth = Math.min(200, window.innerWidth - margin * 2);
+
+        let left = rect.left;
+        // منع الخروج من الجهة اليمين
+        if (left + dropdownWidth > window.innerWidth - margin) {
+            left = window.innerWidth - margin - dropdownWidth;
+        }
+        // منع الخروج من الجهة الشمال
+        if (left < margin) {
+            left = margin;
+        }
+
+        let top = rect.bottom + 6;
+        if (top + 250 > window.innerHeight) {
+            top = Math.max(margin, rect.top - 6 - 250);
+        }
+
+        dropdown.style.left = left + 'px';
+        dropdown.style.top = top + 'px';
+    }
+
+    dropdown.classList.add('show');
 }
 
 function closeHamburgerMenu() {
@@ -758,6 +794,8 @@ function closeHamburgerMenu() {
         dropdown.classList.remove('show');
     }
 }
+
+window.addEventListener('resize', closeHamburgerMenu);
 
 document.addEventListener('click', function(e) {
     const menu = document.querySelector('.hamburger-menu');
@@ -2186,14 +2224,37 @@ async function renderDashboard() {
     const availableTables = tables.filter(t => t.status === 'available');
 
     let revenue = 0;
+    let totalExpenses = 0;
+    let expensesList = [];
+
     if (supabaseClient && currentShift && !currentShift.id.toString().startsWith('temp_')) {
-        const { data: completedOrders } = await supabaseClient
+        const { data: completedOrders, error: revenueError } = await supabaseClient
             .from('orders')
             .select('total')
             .eq('business_id', business.id)
             .eq('status', 'paid')
             .gte('created_at', currentShift.opened_at);
-        revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+        if (revenueError) {
+            console.error('❌ Error loading revenue:', revenueError.message || revenueError);
+        } else {
+            revenue = (completedOrders || []).reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+        }
+
+        const { data: expenses, error: expensesError } = await supabaseClient
+            .from('expenses')
+            .select('description, amount, created_at')
+            .eq('shift_id', currentShift.id)
+            .order('created_at', { ascending: false });
+
+        if (expensesError) {
+            console.error('❌ Error loading expenses:', expensesError.message || expensesError);
+        } else {
+            expensesList = expenses || [];
+            totalExpenses = expensesList.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        }
+    } else if (currentShift && currentShift.id.toString().startsWith('temp_')) {
+        console.warn('⚠️ الشيفت لسه مش متسجل في قاعدة البيانات (temp shift) - الإيراد والمصروفات مش هتتحسب لحد ما يتحل سبب فشل فتح الشيفت في Supabase.');
     }
 
     const canViewRevenue = hasPermission('view_revenue') || currentUser?.type === 'owner';
@@ -2202,7 +2263,33 @@ async function renderDashboard() {
         revenueCard.style.display = canViewRevenue ? 'block' : 'none';
     }
 
+    const canViewExpenses = hasPermission('view_expenses') || currentUser?.type === 'owner';
+    const expensesCard = document.getElementById('dashExpensesCard');
+    const expensesListEl = document.getElementById('dashExpensesList');
+    if (expensesCard) {
+        expensesCard.style.display = canViewExpenses ? 'block' : 'none';
+    }
+    if (expensesListEl) {
+        const expensesSectionTitle = expensesListEl.previousElementSibling;
+        if (!canViewExpenses) {
+            expensesListEl.style.display = 'none';
+            if (expensesSectionTitle) expensesSectionTitle.style.display = 'none';
+        } else {
+            expensesListEl.style.display = 'block';
+            if (expensesSectionTitle) expensesSectionTitle.style.display = 'block';
+            expensesListEl.innerHTML = expensesList.length
+                ? expensesList.map(e => `
+                    <div class="list-row">
+                        <div class="row-title">${escapeHtml(e.description || '-')}</div>
+                        <div class="row-value mono" style="color:var(--danger);">${money(Number(e.amount) || 0)}</div>
+                    </div>
+                `).join('')
+                : `<div class="empty" style="padding:12px;">${t('no_expenses')}</div>`;
+        }
+    }
+
     document.getElementById('dashRevenue').textContent = money(revenue);
+    document.getElementById('dashExpenses').textContent = money(totalExpenses);
     document.getElementById('dashActiveOrders').textContent = activeOrders.length;
     document.getElementById('dashOccupiedTables').textContent = occupiedTables.length;
     document.getElementById('dashAvailableTables').textContent = availableTables.length;
@@ -2836,17 +2923,27 @@ async function confirmPaymentAndClose(orderId) {
         const vat = (subtotal + serviceFee) * (vatPercent / 100);
         const total = subtotal + serviceFee + vat;
 
-        await supabaseClient.from('payments').insert({
+        const { error: paymentInsertError } = await supabaseClient.from('payments').insert({
             order_id: orderId,
             amount: total,
             method_id: paymentId,
             status: 'completed'
         });
+        if (paymentInsertError) {
+            console.error('❌ Payment insert failed:', paymentInsertError.message || paymentInsertError);
+            document.getElementById('paymentError').textContent = t('payment_failed');
+            return;
+        }
 
-        await supabaseClient.from('orders').update({
+        const { error: orderUpdateError } = await supabaseClient.from('orders').update({
             status: 'paid',
             total: total
         }).eq('id', orderId);
+        if (orderUpdateError) {
+            console.error('❌ Order status update to paid failed:', orderUpdateError.message || orderUpdateError);
+            document.getElementById('paymentError').textContent = t('payment_failed');
+            return;
+        }
 
         await supabaseClient.from('tables').update({ status: 'available' }).eq('id', order.table_id);
 
@@ -3162,18 +3259,26 @@ async function saveExpense() {
     if (!description || isNaN(amount) || amount <= 0) { errEl.textContent = t('error_general'); return; }
     if (!supabaseClient || !currentShift) { errEl.textContent = t('error_general'); return; }
     try {
-        await supabaseClient.from('expenses').insert({
+        const { error } = await supabaseClient.from('expenses').insert({
             business_id: business.id,
             shift_id: currentShift.id,
             description,
             amount
         });
+        if (error) {
+            console.error('❌ Expense insert failed:', error.message || error);
+            errEl.textContent = t('error_general');
+            return;
+        }
         showToast(t('expense_added'), 'success');
         closeSheet('expenseOverlay');
         renderDashboard();
         document.getElementById('expenseDesc').value = '';
         document.getElementById('expenseAmount').value = '';
-    } catch (e) { errEl.textContent = t('error_general'); }
+    } catch (e) {
+        console.error('❌ Expense insert exception:', e);
+        errEl.textContent = t('error_general');
+    }
 }
 
 // ============================================================
@@ -3405,9 +3510,6 @@ function renderSettings() {
                         <button class="btn btn-primary btn-sm" onclick="openTableManagementSheet()"><i class="fa-solid fa-plus"></i> ${t('add_table')}</button>
                         <div class="panel" id="settingsTablesList"></div>
                         
-                        <div class="section-title" data-i18n="shift_history">📋 سجل الشيفتات</div>
-                        <div class="panel" id="settingsShiftHistory"></div>
-                        
                         <div class="section-title" data-i18n="payment_methods">💳 طرق الدفع</div>
                         <button class="btn btn-primary btn-sm" onclick="openPaymentMethodSheet()"><i class="fa-solid fa-plus"></i> ${t('add')}</button>
                         <div class="panel" id="settingsPaymentMethods"></div>
@@ -3421,7 +3523,6 @@ function renderSettings() {
     renderSettingsTables();
     renderSettingsPaymentMethods();
     renderSettingsEmployees();
-    renderShiftHistory();
     renderMenuCategoriesList();
 }
 
