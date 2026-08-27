@@ -1007,6 +1007,11 @@ function downloadQRPage() {
 // ============================================================
 // REALTIME SYNC
 // ============================================================
+function getTableLabel(tableId) {
+    const table = tables.find(t => t.id === tableId);
+    return table ? table.number : '?';
+}
+
 function startRealtimeSync() {
     if (!supabaseClient || !business) {
         console.warn('⚠️ Cannot start realtime sync: missing client or business');
@@ -1042,7 +1047,7 @@ function startRealtimeSync() {
                     }
                     showRingNotification(
                         '🔔 طلب جديد!',
-                        `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - ${newRecord.status || 'جديد'}`,
+                        `طاولة ${getTableLabel(newRecord.table_id)} - ${newRecord.status || 'جديد'}`,
                         'new_order'
                     );
                 } else if (eventType === 'UPDATE') {
@@ -1053,7 +1058,7 @@ function startRealtimeSync() {
                             if (newStatus === 'ready') {
                                 showRingNotification(
                                     '🛎️ طلب جاهز للتسليم!',
-                                    `طاولة ${newRecord.table_id?.slice(0, 8) || '?'} - انتظر الويتر`,
+                                    `طاولة ${getTableLabel(newRecord.table_id)} - انتظر الويتر`,
                                     'order_ready'
                                 );
                             }
