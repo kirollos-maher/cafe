@@ -438,17 +438,15 @@ body {
 
 .hamburger-dropdown {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
+    position: fixed;
     background: var(--bg-card);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
-    min-width: 200px;
+    width: 200px;
+    max-width: calc(100vw - 20px);
     padding: 8px 0;
-    z-index: 1000;
-    margin-top: 4px;
+    z-index: 2000;
 }
 
 .hamburger-dropdown.show {
@@ -598,6 +596,13 @@ body {
 .stat-card.orders-card .stat-value { color: #70A8E8; }
 .stat-card.orders-card .stat-label { color: #B8D8F5; }
 
+.stat-card.expenses-card {
+    background: linear-gradient(145deg, #3A2A1A, #1A1A2E);
+    border-color: #E8A870;
+}
+.stat-card.expenses-card .stat-value { color: #E8A870; }
+.stat-card.expenses-card .stat-label { color: #F5D8B8; }
+
 [data-theme="light"] .stat-card.revenue {
     background: linear-gradient(145deg, var(--primary), var(--primary-dark));
 }
@@ -610,6 +615,11 @@ body {
 [data-theme="light"] .stat-card.orders-card {
     background: linear-gradient(145deg, #E8EFF5, #F0F5F7);
 }
+[data-theme="light"] .stat-card.expenses-card {
+    background: linear-gradient(145deg, #F5EDE0, #F7F0F0);
+}
+
+.dash-expenses-list .list-row:last-child { border-bottom: none; }
 
 .stat-card .stat-label {
     font-size: 11px;
