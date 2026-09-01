@@ -3783,6 +3783,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function tryAutoResume() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('customer') === 'true') return; // رابط منيو العميل (QR) - متعملش auto-resume للمالك/الموظف
+
     const code = localStorage.getItem('platepro_business_code');
     if (!code) return;
     try {
