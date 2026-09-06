@@ -101,6 +101,7 @@ const translations = {
         'category': 'التصنيف',
         'no_items': 'مفيش أصناف',
         'no_categories': 'مفيش تصنيفات',
+        'no_employees': 'مفيش موظفين',
         'qr_code': '📱 طلب من العميل',
         'qr_label': 'QR Code الطاولات',
         'qr_sub': 'امسح للطلب من المنيو مباشرة',
@@ -298,6 +299,7 @@ const translations = {
         'category': 'Category',
         'no_items': 'No items',
         'no_categories': 'No categories',
+        'no_employees': 'No employees',
         'qr_code': '📱 Customer Order',
         'qr_label': 'Tables QR Code',
         'qr_sub': 'Scan to order directly from menu',
@@ -3593,7 +3595,7 @@ function renderSettingsPaymentMethods() {
 function renderSettingsEmployees() {
     const el = document.getElementById('settingsEmployees');
     if (employees.length === 0) {
-        el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_items')}</div>`;
+        el.innerHTML = `<div class="empty" style="padding:12px;">${t('no_employees')}</div>`;
         return;
     }
     el.innerHTML = employees.map(emp => {
