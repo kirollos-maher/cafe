@@ -212,6 +212,7 @@ const translations = {
         'status': 'الحالة',
         'device_activated': '✅ تم تفعيل الجهاز بنجاح',
         'item_added_to_order': '✅ تم إضافة {name}',
+        'item_note_placeholder': 'ملاحظة (مثال: من غير سكر)',
         'loading': 'جاري التحميل...',
         'default_item': 'صنف',
         'no_open_shift': 'لا يوجد شيفت مفتوح',
@@ -410,6 +411,7 @@ const translations = {
         'status': 'Status',
         'device_activated': '✅ Device activated successfully',
         'item_added_to_order': '✅ {name} added',
+        'item_note_placeholder': 'Note (e.g. no sugar)',
         'loading': 'Loading...',
         'default_item': 'Item',
         'no_open_shift': 'No open shift',
@@ -1330,9 +1332,23 @@ function addToCustomerCart(itemId) {
     const item = customerMenuItems.find(i => i.id === itemId);
     if (!item) return;
     const existing = customerCart.find(i => i.id === itemId);
-    if (existing) { existing.quantity += 1; } else { customerCart.push({ ...item, quantity: 1 }); }
+    if (existing) { existing.quantity += 1; } else { customerCart.push({ ...item, quantity: 1, note: '' }); }
     updateCustomerCartUI();
     showCustomerToast('✅ تم إضافة ' + item.name);
+}
+
+// حد أقصى لطول الملاحظة لمنع أي محاولة إدخال بيانات ضخمة أو ضارة
+const MAX_NOTE_LENGTH = 200;
+
+function sanitizeNote(raw) {
+    if (!raw) return '';
+    return String(raw).trim().slice(0, MAX_NOTE_LENGTH);
+}
+
+function updateCustomerCartNote(index, value) {
+    const item = customerCart[index];
+    if (!item) return;
+    item.note = sanitizeNote(value);
 }
 
 function updateCustomerCartUI() {
@@ -1358,11 +1374,12 @@ function showCustomerCart() {
     }
     container.innerHTML = customerCart.map((item, index) =>
         `<div class="order-item">
-                        <div>
+                        <div style="flex:1;">
                             <div class="item-name">${escapeHtml(item.name)}</div>
                             <div class="item-details">${item.quantity} × ${money(item.price)}
                                 <button class="btn btn-xs" style="background:var(--danger);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:8px;" onclick="removeFromCustomerCart(${index})"><i class="fa-solid fa-minus"></i></button>
                             </div>
+                            <input type="text" class="item-note-input" maxlength="${MAX_NOTE_LENGTH}" placeholder="📝 ${t('item_note_placeholder')}" value="${escapeHtml(item.note || '')}" oninput="updateCustomerCartNote(${index}, this.value)">
                         </div>
                         <div class="item-price">${money(item.price * item.quantity)}</div>
                     </div>`
@@ -1457,7 +1474,8 @@ async function submitCustomerOrder() {
             quantity: item.quantity,
             unit_price: item.price,
             total: item.price * item.quantity,
-            status: 'pending'
+            status: 'pending',
+            notes: sanitizeNote(item.note) || null
         }));
 
         await supabaseClient.from('order_items').insert(orderItems);
@@ -1494,6 +1512,7 @@ async function handleSetupContinue() {
         const { data: biz, error } = await supabaseClient.from('businesses').select('*').eq('code', code).single();
         if (error || !biz) { errEl.textContent = t('error_invalid_code'); return; }
         business = biz;
+        delete business.owner_pin; // لا يُحتفظ بالـ PIN في الذاكرة بعد التحقق منه في الخادم فقط
         localStorage.setItem('platepro_business_code', code);
 
         loadLogo();
@@ -1595,10 +1614,11 @@ async function handleEmployeeUnlock() {
     if (!name || !pin) { errEl.textContent = t('error_general'); return; }
 
     if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
-    const { data: emps, error } = await supabaseClient.from('employees').select('*').eq('business_id', business.id).eq('is_active', true);
+    // فلترة بالـ PIN من جانب الخادم أيضاً، بحيث لا تصل أرقام PIN الخاصة بباقي الموظفين للمتصفح إطلاقاً
+    const { data: emps, error } = await supabaseClient.from('employees').select('*').eq('business_id', business.id).eq('is_active', true).eq('pin', pin);
     if (error) { errEl.textContent = t('error_general'); return; }
 
-    const emp = (emps || []).find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase() && String(e.pin) === pin);
+    const emp = (emps || []).find(e => e.name && e.name.trim().toLowerCase() === name.toLowerCase());
     if (emp) {
         currentUser = { type: 'employee', ...emp };
         enterMainApp();
@@ -1616,13 +1636,17 @@ async function handleUnlock() {
     if (deviceRecord.expiry_date && new Date(deviceRecord.expiry_date) < new Date()) { errEl.textContent = 'الاشتراك منتهي.'; return; }
     if (!pin) { errEl.textContent = t('error_general'); return; }
 
-    if (pin === business.owner_pin) {
+    if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
+
+    // التحقق من PIN المالك يتم بالكامل عن طريق استعلام مطابقة في قاعدة البيانات
+    // بدلاً من الاحتفاظ بالـ PIN في الذاكرة، لمنع قراءته من الـ console أو الذاكرة
+    const { data: ownerMatch } = await supabaseClient.from('businesses').select('id').eq('id', business.id).eq('owner_pin', pin).maybeSingle();
+    if (ownerMatch) {
         currentUser = { type: 'owner', name: 'المالك' };
         enterMainApp();
         return;
     }
 
-    if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
     const { data: emp } = await supabaseClient.from('employees').select('*').eq('business_id', business.id).eq('pin', pin).eq('is_active', true).maybeSingle();
     if (emp) {
         currentUser = { type: 'employee', ...emp };
@@ -2428,6 +2452,7 @@ function renderKitchenOrders() {
                 itemsPreview += ` +${orderItems.length - 3} ${t('more')}`;
             }
         }
+        const hasNotes = orderItems.some(item => item.notes);
 
         const statusLabelMap = {
             pending: t('pending'),
@@ -2436,7 +2461,7 @@ function renderKitchenOrders() {
 
         return `<div class="list-row" onclick="viewKitchenOrder('${order.id}')" style="cursor:pointer; border-bottom:2px solid var(--border); padding:14px 4px;">
                             <div>
-                                <div class="row-title" style="font-size:16px;">${t('table')} ${table?.number || '?'}</div>
+                                <div class="row-title" style="font-size:16px;">${t('table')} ${table?.number || '?'} ${hasNotes ? '📝' : ''}</div>
                                 <div class="row-sub">${itemCount} ${t('items')} · ${itemsPreview}</div>
                             </div>
                             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
@@ -2470,6 +2495,7 @@ async function viewKitchenOrder(orderId) {
                                 <div>
                                     <div class="item-name" style="font-size:16px;">${escapeHtml(item.menu_items?.name || t('default_item'))}</div>
                                     <div class="item-details" style="font-size:14px; color:var(--text-secondary);">${item.quantity} ×</div>
+                                    ${item.notes ? `<div class="item-note-display item-note-kitchen">📝 ${escapeHtml(item.notes)}</div>` : ''}
                                 </div>
                             </div>`
         ).join('');
@@ -2687,7 +2713,7 @@ function openTableSheet(tableId) {
 // ORDER CREATION
 // ============================================================
 function addItemToOrder(item) {
-    const existing = _orderItems.find(i => i.menu_item_id === item.id);
+    const existing = _orderItems.find(i => i.menu_item_id === item.id && !i.note);
     if (existing) {
         existing.quantity += 1;
         existing.total = existing.quantity * existing.unit_price;
@@ -2697,11 +2723,18 @@ function addItemToOrder(item) {
             name: item.name,
             unit_price: item.price,
             quantity: 1,
-            total: item.price
+            total: item.price,
+            note: ''
         });
     }
     renderTableOrderItems();
     showToast(t('item_added_to_order', { name: item.name }), 'success');
+}
+
+function updateTableOrderItemNote(index, value) {
+    const item = _orderItems[index];
+    if (!item) return;
+    item.note = sanitizeNote(value);
 }
 
 function renderTableOrderItems() {
@@ -2716,13 +2749,14 @@ function renderTableOrderItems() {
     const total = _orderItems.reduce((sum, i) => sum + i.total, 0);
     container.innerHTML = `${_orderItems.map((item, index) =>
                     `<div class="order-item">
-                                <div>
+                                <div style="flex:1;">
                                     <div class="item-name">${escapeHtml(item.name)}</div>
                                     <div class="item-details">
                                         ${item.quantity} × ${money(item.unit_price)}
                                         <button class="btn btn-xs" style="background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;margin-right:8px;" onclick="removeTableOrderItem(${index})"><i class="fa-solid fa-minus"></i></button>
                                         <button class="btn btn-xs" style="background:var(--success);color:#fff;border:none;border-radius:6px;cursor:pointer;margin-right:4px;" onclick="addTableOrderItem(${index})"><i class="fa-solid fa-plus"></i></button>
                                     </div>
+                                    <input type="text" class="item-note-input" maxlength="${MAX_NOTE_LENGTH}" placeholder="📝 ${t('item_note_placeholder')}" value="${escapeHtml(item.note || '')}" oninput="updateTableOrderItemNote(${index}, this.value)">
                                 </div>
                                 <div class="item-price">${money(item.total)}</div>
                             </div>`
@@ -2784,7 +2818,8 @@ async function createOrder(tableId) {
             menu_item_id: item.menu_item_id,
             quantity: item.quantity,
             unit_price: item.unit_price,
-            total: item.total
+            total: item.total,
+            notes: sanitizeNote(item.note) || null
         }));
 
         await supabaseClient.from('order_items').insert(orderItems);
@@ -2824,6 +2859,7 @@ async function loadOrderItems(orderId) {
                             <div>
                                 <div class="item-name">${escapeHtml(item.menu_items?.name || t('default_item'))}</div>
                                 <div class="item-details">${item.quantity} × ${money(item.unit_price)}</div>
+                                ${item.notes ? `<div class="item-note-display">📝 ${escapeHtml(item.notes)}</div>` : ''}
                             </div>
                             <div class="item-price">${money(item.total)}</div>
                         </div>`
@@ -2887,9 +2923,12 @@ async function printReceipt(orderId) {
     let itemsHtml = '';
     if (items && items.length > 0) {
         itemsHtml = items.map(item =>
-            `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #eee;">
-                                <span>${escapeHtml(item.menu_items?.name || t('default_item'))} × ${item.quantity}</span>
-                                <span>${money(item.unit_price * item.quantity)}</span>
+            `<div style="padding:4px 0;font-size:13px;border-bottom:1px solid #eee;">
+                                <div style="display:flex;justify-content:space-between;">
+                                    <span>${escapeHtml(item.menu_items?.name || t('default_item'))} × ${item.quantity}</span>
+                                    <span>${money(item.unit_price * item.quantity)}</span>
+                                </div>
+                                ${item.notes ? `<div style="color:#888;font-size:11px;">📝 ${escapeHtml(item.notes)}</div>` : ''}
                             </div>`
         ).join('');
     }
@@ -3795,6 +3834,7 @@ async function tryAutoResume() {
         const { data: biz } = await supabaseClient.from('businesses').select('*').eq('code', code).single();
         if (!biz) return;
         business = biz;
+        delete business.owner_pin; // لا يُحتفظ بالـ PIN في الذاكرة بعد التحقق منه في الخادم فقط
         const { data: dev } = await supabaseClient.from('devices').select('*').eq('business_id', biz.id).eq('device_id', getDeviceId()).maybeSingle();
         if (!dev) return;
         deviceRecord = dev;
