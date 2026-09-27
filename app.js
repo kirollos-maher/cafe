@@ -1533,6 +1533,8 @@ async function handleSetupContinue() {
     } finally { btn.disabled = false; }
 }
 
+
+
 async function handleActivateDevice() {
     const code = document.getElementById('activationCodeInput').value.trim().toUpperCase();
     const errEl = document.getElementById('activationError');
@@ -1541,32 +1543,64 @@ async function handleActivateDevice() {
 
     try {
         if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
-        const { data: actCode, error } = await supabaseClient.from('activation_codes').select('*').eq('business_id', business.id).eq('code', code).eq('used', false).single();
-        if (error || !actCode) { errEl.textContent = 'الكود غير صحيح أو مستخدم قبل كده.'; return; }
+        
+        const { data: actCode, error } = await supabaseClient
+            .from('activation_codes')
+            .select('*')
+            .eq('business_id', business.id)
+            .eq('code', code)
+            .eq('used', false)
+            .single();
+        
+        if (error || !actCode) { 
+            console.error('❌ Activation code lookup failed:', error);
+            errEl.textContent = 'الكود غير صحيح أو مستخدم قبل كده.'; 
+            return; 
+        }
 
         const deviceId = getDeviceId();
         const expiry = new Date();
         expiry.setDate(expiry.getDate() + 30);
-        const { data: newDev, error: devErr } = await supabaseClient.from('devices').insert({
-            business_id: business.id,
-            device_id: deviceId,
-            device_label: 'جهاز جديد',
-            is_active: true,
-            revoked: false,
-            expiry_date: expiry.toISOString()
-        }).select().single();
+        
+        const { data: newDev, error: devErr } = await supabaseClient
+            .from('devices')
+            .insert({
+                business_id: business.id,
+                device_id: deviceId,
+                device_label: 'جهاز جديد',
+                is_active: true,
+                revoked: false,
+                expiry_date: expiry.toISOString()
+            })
+            .select()
+            .single();
 
-        if (devErr) { errEl.textContent = t('error_general'); return; }
+        if (devErr) { 
+            // ✅ هنا هيظهرلك الإيرور الحقيقي في الإيرور تيكست
+            console.error('❌ Device insert failed:', devErr);
+            errEl.textContent = '⚠️ ' + (devErr.message || 'فشل إضافة الجهاز');
+            return; 
+        }
 
-        await supabaseClient.from('activation_codes').update({ used: true, used_at: new Date().toISOString() }).eq('id', actCode.id);
+        const { error: codeUpdateErr } = await supabaseClient
+            .from('activation_codes')
+            .update({ used: true, used_at: new Date().toISOString() })
+            .eq('id', actCode.id);
+        
+        if (codeUpdateErr) {
+            console.error('❌ Activation code update failed:', codeUpdateErr);
+        }
+
         deviceRecord = newDev;
         showToast(t('device_activated'), 'success');
         proceedToLock();
     } catch (e) {
-        console.error(e);
-        errEl.textContent = t('error_connection');
+        console.error('❌ Activation exception:', e);
+        errEl.textContent = '⚠️ ' + (e.message || t('error_connection'));
     }
 }
+
+
 
 function proceedToLock() {
     document.getElementById('lockBizCode').textContent = business.code;
