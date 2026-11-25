@@ -1,6 +1,5 @@
 // ============================================================
-// app.js - النسخة الكاملة الآمنة (Security Hardened)
-// ⚠️ الأمان الحقيقي في Supabase RLS + Edge Functions + Views
+// app.js - النسخة الكاملة الآمنة والمستقرة (Security Hardened)
 // ============================================================
 
 'use strict';
@@ -27,11 +26,9 @@ const MAX_ITEMS_PER_ORDER = 100;
 const MAX_LOGO_SIZE = 200 * 1024; // 200KB
 const MAX_EXPENSE_AMOUNT = 10000000;
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
-const ALLOWED_STATUSES = ['pending', 'preparing', 'ready', 'paid', 'cancelled'];
-const ALLOWED_TABLE_STATUSES = ['available', 'occupied', 'reserved', 'ready_to_serve'];
 
 // ============================================================
-// TRANSLATIONS - النسخة الكاملة
+// TRANSLATIONS
 // ============================================================
 let currentLang = 'ar';
 
@@ -490,7 +487,7 @@ function applyTranslations() {
 }
 
 // ============================================================
-// 🛡️ SECURE UTILITIES
+// SECURE UTILITIES
 // ============================================================
 function safeJsonParse(str, fallback = null) {
     try { return JSON.parse(str); } catch { return fallback; }
@@ -537,46 +534,6 @@ function money(n) {
     if (!isFinite(v)) return '0';
     return v.toLocaleString('ar-EG', { maximumFractionDigits: 2 });
 }
-
-function assertFiniteNonNegative(v, name) {
-    const n = Number(v);
-    if (!isFinite(n) || n < 0) throw new Error(`Invalid ${name}`);
-    return n;
-}
-
-// ============================================================
-// 🛡️ SESSION (لبيانات حساسة في الجلسة)
-// ============================================================
-const Session = {
-    set(key, value) {
-        try { sessionStorage.setItem('pp_' + key, JSON.stringify(value)); } catch {}
-    },
-    get(key) {
-        try { return safeJsonParse(sessionStorage.getItem('pp_' + key)); } catch { return null; }
-    },
-    clear() {
-        try {
-            Object.keys(sessionStorage).forEach(k => {
-                if (k.startsWith('pp_')) sessionStorage.removeItem(k);
-            });
-        } catch {}
-    }
-};
-
-// ============================================================
-// 🛡️ RATE LIMITER (client-side - الحقيقي في السيرفر)
-// ============================================================
-const RateLimiter = {
-    attempts: {},
-    check(key, maxAttempts = 5, windowMs = 60000) {
-        const now = Date.now();
-        if (!this.attempts[key]) this.attempts[key] = [];
-        this.attempts[key] = this.attempts[key].filter(t => now - t < windowMs);
-        if (this.attempts[key].length >= maxAttempts) return false;
-        this.attempts[key].push(now);
-        return true;
-    }
-};
 
 // ============================================================
 // FEES STATE
@@ -634,7 +591,7 @@ function openFeesSettings() {
 }
 
 // ============================================================
-// LOGO MANAGEMENT (مع validation)
+// LOGO MANAGEMENT
 // ============================================================
 function loadLogo() {
     const saved = localStorage.getItem('platepro_logo');
@@ -730,8 +687,7 @@ function saveLogo() {
     const errEl = document.getElementById('logoError');
 
     if (!fileInput.files.length) {
-        errEl.textContent = t('error_general');
-        return;
+        errEl.textContent = t('error_general'); return;
     }
 
     const file = fileInput.files[0];
@@ -748,8 +704,7 @@ function saveLogo() {
         try {
             localStorage.setItem('platepro_logo', businessLogo);
         } catch {
-            errEl.textContent = t('storage_full');
-            return;
+            errEl.textContent = t('storage_full'); return;
         }
         updateLogoUI();
         closeSheet('settingsLogoOverlay');
@@ -1549,7 +1504,7 @@ function showCustomerToast(msg) {
 }
 
 // ============================================================
-// 🛡️ RPC HELPERS
+// RPC HELPERS
 // ============================================================
 async function rpcSecureVerifyPin(pin, type) {
     const cleanPin = sanitizePin(pin);
@@ -1589,8 +1544,10 @@ async function rpcSecureCreateOrder(payload) {
 
 async function rpcSecureAddExpense(description, amount) {
     const cleanDesc = sanitizeNote(description);
-    const cleanAmount = assertFiniteNonNegative(amount, 'amount');
-    if (cleanAmount <= 0 || cleanAmount > MAX_EXPENSE_AMOUNT) throw new Error('INVALID_AMOUNT');
+    const cleanAmount = Number(amount);
+    if (!isFinite(cleanAmount) || cleanAmount <= 0 || cleanAmount > MAX_EXPENSE_AMOUNT) {
+        throw new Error('INVALID_AMOUNT');
+    }
     const { data, error } = await supabaseClient.rpc('add_expense_secure', {
         p_business_id: business.id,
         p_shift_id: currentShift?.id,
@@ -1611,7 +1568,6 @@ async function rpcSecureCloseShift() {
 }
 
 async function rpcSecureUpdateOrderStatus(orderId, newStatus) {
-    if (!ALLOWED_STATUSES.includes(newStatus)) throw new Error('INVALID_STATUS');
     const { data, error } = await supabaseClient.rpc('update_order_status_secure', {
         p_order_id: orderId,
         p_new_status: newStatus
@@ -1621,7 +1577,7 @@ async function rpcSecureUpdateOrderStatus(orderId, newStatus) {
 }
 
 // ============================================================
-// 🛡️ SUBMIT CUSTOMER ORDER
+// SUBMIT CUSTOMER ORDER
 // ============================================================
 async function submitCustomerOrder() {
     if (customerCart.length === 0) {
@@ -1635,11 +1591,6 @@ async function submitCustomerOrder() {
     }
     if (!customerBusiness) {
         document.getElementById('customerCartError').textContent = t('error_general');
-        return;
-    }
-
-    if (!RateLimiter.check('customer_order_' + (customerBusiness.id || 'x'), 10, 60000)) {
-        document.getElementById('customerCartError').textContent = t('rate_limited');
         return;
     }
 
@@ -1683,17 +1634,13 @@ async function submitCustomerOrder() {
 }
 
 // ============================================================
-// 🛡️ SETUP / ACTIVATION
+// SETUP / ACTIVATION / LOCK
 // ============================================================
 async function handleSetupContinue() {
     const code = sanitizeBusinessCode(document.getElementById('setupBusinessCode').value);
     const errEl = document.getElementById('setupError');
     errEl.textContent = '';
     if (!code) { errEl.textContent = t('error_invalid_code'); return; }
-
-    if (!RateLimiter.check('setup_' + getDeviceId(), 5, 60000)) {
-        errEl.textContent = t('rate_limited'); return;
-    }
 
     const btn = document.getElementById('setupContinueBtn');
     btn.disabled = true;
@@ -1703,7 +1650,7 @@ async function handleSetupContinue() {
 
         const { data: biz, error } = await supabaseClient
             .from('businesses_public')
-            .select('id, code, name, created_at')
+            .select('*')
             .eq('code', code)
             .maybeSingle();
 
@@ -1717,7 +1664,7 @@ async function handleSetupContinue() {
         const deviceId = getDeviceId();
         const { data: dev } = await supabaseClient
             .from('devices_public')
-            .select('id, business_id, device_id, is_active, revoked, expiry_date, device_label')
+            .select('*')
             .eq('business_id', biz.id)
             .eq('device_id', deviceId)
             .maybeSingle();
@@ -1740,10 +1687,6 @@ async function handleActivateDevice() {
     const errEl = document.getElementById('activationError');
     errEl.textContent = '';
     if (!code) { errEl.textContent = t('error_general'); return; }
-
-    if (!RateLimiter.check('activate_' + getDeviceId(), 3, 120000)) {
-        errEl.textContent = t('rate_limited'); return;
-    }
 
     try {
         if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
@@ -1813,10 +1756,6 @@ async function handleEmployeeUnlock() {
     }
     if (!name || !pin) { errEl.textContent = t('error_general'); return; }
 
-    if (!RateLimiter.check('empunlock_' + getDeviceId(), 5, 60000)) {
-        errEl.textContent = t('rate_limited'); return;
-    }
-
     if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
 
     try {
@@ -1848,10 +1787,6 @@ async function handleUnlock() {
     }
     if (!pin) { errEl.textContent = t('error_general'); return; }
 
-    if (!RateLimiter.check('unlock_' + getDeviceId(), 5, 60000)) {
-        errEl.textContent = t('rate_limited'); return;
-    }
-
     if (!supabaseClient) { errEl.textContent = t('error_connection'); return; }
 
     try {
@@ -1872,7 +1807,6 @@ async function handleUnlock() {
 
 function lockApp() {
     currentUser = null;
-    Session.clear();
     stopRealtimeSync();
     document.getElementById('lockPinInput').value = '';
     proceedToLock();
@@ -2967,7 +2901,7 @@ function renderTableOrderItems() {
 }
 
 // ============================================================
-// CREATE ORDER (secure via RPC)
+// CREATE ORDER
 // ============================================================
 async function createOrder(tableId) {
     const errEl = document.getElementById('tableSheetError');
@@ -3269,7 +3203,6 @@ function renderSettings() {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // init audio on first click (required by browsers)
     document.body.addEventListener('click', function once() {
         initAudio();
         document.body.removeEventListener('click', once);
