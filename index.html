@@ -2,12 +2,14 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://bccuzjjnrqnmqwcypucr.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <title>Plate Pro - Restaurant Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4" crossorigin="anonymous"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -425,7 +427,7 @@
             <div class="sheet-title"><span data-i18n="add_employee">إضافة موظف</span><button class="close-x" onclick="closeSheet('employeeOverlay')"><i class="fa-solid fa-xmark"></i></button></div>
             <input type="hidden" id="editEmployeeId">
             <div class="field"><label data-i18n="employee_name">الاسم</label><input type="text" id="employeeName" placeholder="اسم الموظف"></div>
-            <div class="field"><label data-i18n="employee_pin">PIN (4 أرقام)</label><input type="text" inputmode="numeric" maxlength="6" id="employeePin" class="mono" placeholder="1234"></div>
+            <div class="field"><label data-i18n="employee_pin">PIN (4 أرقام)</label><input type="password" autocomplete="new-password" inputmode="numeric" maxlength="6" id="employeePin" class="mono" placeholder="1234"></div>
             <div class="field"><label data-i18n="employee_role">الدور</label>
                 <select id="employeeRole">
                     <option value="waiter" data-i18n="waiter">نادل</option>
