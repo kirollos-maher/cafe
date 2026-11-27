@@ -6,7 +6,7 @@ const SUPABASE_URL = 'https://bccuzjjnrqnmqwcypucr.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_X3pnp718gcVx9-wrisvtHw_44hMVVZ_';
 
 // مفتاح VAPID العام لإشعارات الطلبات (من: npx web-push generate-vapid-keys) — لو فاضي الإشعارات الخارجية مش هتشتغل
-window.VAPID_PUBLIC_KEY = '';
+window.VAPID_PUBLIC_KEY = 'BEu-7YPT4Dkn55K9lADn2zzCtSYg6lP6kSFrF_06m_QJG6i3XMigdN7y3ut8tAdasITLnkIoJsk-W-y1T6--RSk';
 
 // منع فتح الصفحة داخل iframe (Clickjacking). الأفضل كمان تضيف header: Content-Security-Policy: frame-ancestors 'none' من الاستضافة.
 if (window.top !== window.self) {
