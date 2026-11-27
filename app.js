@@ -1916,9 +1916,12 @@ let refreshInterval = null;
 
 function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
+    let busy = false;
     refreshInterval = setInterval(async () => {
-        if (!currentUser || document.hidden) return;
+        if (!currentUser || document.hidden || busy) return;
+        busy = true;
         try {
+            // الطلبات + تنبيهات (طلب جديد / طلب جاهز)
             const prev = Object.fromEntries(Object.values(orders).map(o => [o.id, o.status]));
             await loadActiveOrders();
             Object.values(orders).forEach(o => {
@@ -1926,9 +1929,24 @@ function startAutoRefresh() {
                 else if (prev[o.id] && prev[o.id] !== 'ready' && o.status === 'ready') showRingNotification('طلب جاهز للتسليم!', 'طاولة ' + getTableLabel(o.table_id), 'order_ready');
             });
             await loadTables();
-            renderTables(); renderKitchenOrders(); renderDashboard();
+
+            // نحدّث الشاشة المفتوحة بس
+            const view = document.querySelector('.view.active')?.id;
+            if (view === 'view-dashboard') await renderDashboard();          // فيها الإيراد والمصروفات
+            else if (view === 'view-tables') await renderTables();
+            else if (view === 'view-kitchen') renderKitchenOrders();
+            else if (view === 'view-menu') {
+                // المنيو: ما نعيدش الرسم لو فيه نافذة مفتوحة أو حد بيكتب، ولا لو مفيش تغيير
+                const editing = !!document.querySelector('.overlay.show') || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
+                if (!editing) {
+                    const before = JSON.stringify([menuItems, menuCategories]);
+                    await Promise.all([loadMenuItems(), loadMenuCategories()]);
+                    if (JSON.stringify([menuItems, menuCategories]) !== before) { renderMenuView(); renderMenuManagement(); }
+                }
+            }
         } catch (e) { console.warn('refresh failed'); }
-    }, 5000);
+        finally { busy = false; }
+    }, 3000);
 }
 
 // ============================================================
