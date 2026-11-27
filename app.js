@@ -1336,7 +1336,7 @@ async function handleActivateDevice() {
         deviceRecord = r;
         showToast(t('device_activated'), 'success');
         proceedToLock();
-    } catch (e) { errEl.textContent = t('error_connection'); }
+    } catch (e) { console.warn('rpc failed:', e && e.code, e && e.message); errEl.textContent = t('error_connection'); }
 }
 
 function proceedToLock() {
@@ -1394,7 +1394,7 @@ async function doLogin(pin, name) {
         document.getElementById('lockPinInput').value = '';
         document.getElementById('lockEmpPin').value = '';
         enterMainApp();
-    } catch (e) { errEl.textContent = t('error_connection'); }
+    } catch (e) { console.warn('rpc failed:', e && e.code, e && e.message); errEl.textContent = t('error_connection'); }
 }
 function handleUnlock() { return doLogin(document.getElementById('lockPinInput').value.trim(), null); }
 
@@ -3498,12 +3498,3 @@ async function tryAutoResume() {
         proceedToLock();
     } catch (e) { localStorage.removeItem('platepro_business_code'); }
 }
-
-console.log('Real-time synchronization between devices');
-console.log('Advanced shift history with daily/weekly/monthly views');
-console.log('Detailed shift view with table and time analysis');
-console.log('One shift for the entire restaurant');
-console.log('Granular permissions per role');
-console.log('Notifications only for waiters when order is ready');
-console.log('Kitchen orders for chef');
-console.log('Ring notifications for new & ready orders');
